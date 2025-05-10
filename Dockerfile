@@ -13,8 +13,8 @@ LABEL description="Application DTAHC pour la gestion de dossiers clients"
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Installer dumb-init pour une meilleure gestion des signaux
-RUN apk add --no-cache dumb-init
+# Installer les dépendances nécessaires
+RUN apk add --no-cache dumb-init python3 make g++ gcc
 
 # Copier les fichiers de dépendances
 COPY package*.json ./

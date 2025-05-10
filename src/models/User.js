@@ -3,7 +3,7 @@
  */
 
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const { hashPassword, comparePassword } = require('../services/authService');
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -49,14 +49,13 @@ const userSchema = new mongoose.Schema({
 // Hook pre-save pour hacher les mots de passe
 userSchema.pre('save', async function(next) {
   const user = this;
-  
+
   // Uniquement hacher le mot de passe s'il a été modifié ou est nouveau
   if (!user.isModified('password')) return next();
-  
+
   try {
-    // Générer un sel et hacher le mot de passe
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(user.password, salt);
+    // Hacher le mot de passe avec notre service d'authentification
+    user.password = hashPassword(user.password);
     next();
   } catch (err) {
     next(err);
@@ -65,7 +64,7 @@ userSchema.pre('save', async function(next) {
 
 // Méthode pour comparer les mots de passe
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+  return comparePassword(candidatePassword, this.password);
 };
 
 // Méthode pour obtenir un objet utilisateur sans le mot de passe
