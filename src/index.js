@@ -11,7 +11,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const logger = require('./services/logger');
+const { setupSwagger } = require('./config/swagger');
+
+// Routes
 const healthRoutes = require('./routes/healthRoutes');
+const authRoutes = require('./routes/authRoutes');
+const swaggerRoutes = require('./routes/swaggerRoutes');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -32,14 +37,20 @@ app.use((req, res, next) => {
 // Fichiers statiques
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Configuration Swagger
+setupSwagger(app);
+
 // Routes API
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/docs', swaggerRoutes);
 
 app.get('/api', (req, res) => {
   res.status(200).json({
     message: 'Bienvenue sur l\'API DTAHC',
     version: '1.0.0',
     status: 'OK',
+    docs: '/api-docs',
   });
 });
 
@@ -58,6 +69,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   logger.info(`Serveur démarré sur le port ${PORT}`);
   logger.info(`API disponible sur http://localhost:${PORT}/api`);
+  logger.info(`Documentation API sur http://localhost:${PORT}/api-docs`);
   logger.info(`Interface web disponible sur http://localhost:${PORT}`);
 });
 
