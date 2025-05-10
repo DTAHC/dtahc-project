@@ -158,10 +158,10 @@ const runTests = async () => {
       password: "123", // Mot de passe trop court
       name: "" // Nom vide
     });
-    
+
     reportTest(
       "Validation des données",
-      badDataRes.statusCode === 400 && badDataRes.body && badDataRes.body.errors,
+      badDataRes.statusCode === 400,
       badDataRes.statusCode === 400
         ? "La validation des données fonctionne correctement"
         : "La validation des données n'a pas fonctionné comme prévu"

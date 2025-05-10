@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { generateToken } = require('../config/jwt');
+// Utilisation de la validation Joi via notre middleware personnalisé
 const { validate, schemas } = require('../middleware/validationMiddleware');
 const { authenticate } = require('../middleware/authMiddleware');
 const User = require('../models/User');
