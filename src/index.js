@@ -12,6 +12,7 @@ const helmet = require('helmet');
 const path = require('path');
 const logger = require('./services/logger');
 const { setupSwagger } = require('./config/swagger');
+const { connect } = require('./config/database');
 
 // Routes
 const healthRoutes = require('./routes/healthRoutes');
@@ -65,12 +66,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erreur serveur', message: err.message });
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
-  logger.info(`Serveur démarré sur le port ${PORT}`);
-  logger.info(`API disponible sur http://localhost:${PORT}/api`);
-  logger.info(`Documentation API sur http://localhost:${PORT}/api-docs`);
-  logger.info(`Interface web disponible sur http://localhost:${PORT}`);
-});
+// Connexion à la base de données puis démarrage du serveur
+const startServer = async () => {
+  try {
+    // Connexion à MongoDB
+    await connect();
+
+    // Démarrage du serveur
+    app.listen(PORT, () => {
+      logger.info(`Serveur démarré sur le port ${PORT}`);
+      logger.info(`API disponible sur http://localhost:${PORT}/api`);
+      logger.info(`Documentation API sur http://localhost:${PORT}/api-docs`);
+      logger.info(`Interface web disponible sur http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    logger.error(`Erreur lors du démarrage du serveur: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app; // Pour les tests
