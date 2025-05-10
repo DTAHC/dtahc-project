@@ -8,7 +8,12 @@
     "dev": "nodemon src/index.js",
     "test": "jest",
     "lint": "eslint .",
-    "build": "echo 'Building project...'"
+    "build": "echo 'Building project...'",
+    "check-env": "node scripts/check-env.js",
+    "setup": "npm install && npm run check-env && docker compose up -d",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "repository": {
     "type": "git",

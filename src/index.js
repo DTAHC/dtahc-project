@@ -9,7 +9,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const logger = require('./services/logger');
+const healthRoutes = require('./routes/healthRoutes');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -27,13 +29,23 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.get('/', (req, res) => {
-  res.status(200).json({ 
+// Fichiers statiques
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Routes API
+app.use('/api/health', healthRoutes);
+
+app.get('/api', (req, res) => {
+  res.status(200).json({
     message: 'Bienvenue sur l\'API DTAHC',
     version: '1.0.0',
     status: 'OK'
   });
+});
+
+// Route principale (pour SPA frontend)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Middleware de gestion des erreurs
@@ -45,6 +57,8 @@ app.use((err, req, res, next) => {
 // Démarrage du serveur
 app.listen(PORT, () => {
   logger.info(`Serveur démarré sur le port ${PORT}`);
+  logger.info(`API disponible sur http://localhost:${PORT}/api`);
+  logger.info(`Interface web disponible sur http://localhost:${PORT}`);
 });
 
 module.exports = app; // Pour les tests
