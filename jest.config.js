@@ -11,5 +11,5 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  testTimeout: 10000
+  testTimeout: 10000,
 };

@@ -39,7 +39,7 @@ app.get('/api', (req, res) => {
   res.status(200).json({
     message: 'Bienvenue sur l\'API DTAHC',
     version: '1.0.0',
-    status: 'OK'
+    status: 'OK',
   });
 });
 

@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
     status: 'UP',
     timestamp: new Date(),
     environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0'
+    version: '1.0.0',
   });
 });
 
@@ -21,13 +21,13 @@ router.get('/detailed', async (req, res) => {
     // Vérifier l'état de MongoDB
     const dbStatus = {
       status: 'UP',
-      name: 'MongoDB'
+      name: 'MongoDB',
     };
     
     // Vérifier l'état de Redis (si configuré)
     const redisStatus = {
       status: 'UP',
-      name: 'Redis'
+      name: 'Redis',
     };
     
     res.status(200).json({
@@ -36,13 +36,13 @@ router.get('/detailed', async (req, res) => {
       environment: process.env.NODE_ENV || 'development',
       dependencies: [dbStatus, redisStatus],
       memory: process.memoryUsage(),
-      uptime: process.uptime()
+      uptime: process.uptime(),
     });
   } catch (error) {
     res.status(500).json({
       status: 'DOWN',
       timestamp: new Date(),
-      error: error.message
+      error: error.message,
     });
   }
 });

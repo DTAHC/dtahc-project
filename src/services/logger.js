@@ -15,11 +15,11 @@ if (!fs.existsSync(logDir)) {
 // Configuration du format de log
 const logFormat = winston.format.combine(
   winston.format.timestamp({
-    format: 'YYYY-MM-DD HH:mm:ss'
+    format: 'YYYY-MM-DD HH:mm:ss',
   }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
-  winston.format.json()
+  winston.format.json(),
 );
 
 // Configuration des transports de logs
@@ -29,19 +29,19 @@ const logger = winston.createLogger({
   defaultMeta: { service: 'dtahc-api' },
   transports: [
     // Écrire tous les logs dans le fichier app.log
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: path.join(logDir, 'app.log'),
       maxsize: 5242880, // 5MB
-      maxFiles: 5
+      maxFiles: 5,
     }),
     // Écrire les logs d'erreur dans error.log
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'error.log'), 
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
       level: 'error',
       maxsize: 5242880, // 5MB
-      maxFiles: 5
-    })
-  ]
+      maxFiles: 5,
+    }),
+  ],
 });
 
 // Si nous ne sommes pas en production, afficher les logs dans la console
@@ -49,7 +49,7 @@ if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
       winston.format.colorize(),
-      winston.format.simple()
+      winston.format.simple(),
     )
   }));
 }

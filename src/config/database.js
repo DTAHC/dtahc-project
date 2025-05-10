@@ -8,7 +8,7 @@ const logger = require('../services/logger');
 // Options de connexion
 const options = {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 };
 
 /**

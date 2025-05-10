@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
   },
   email: {
     type: String,
@@ -18,32 +18,32 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Veuillez entrer un email valide']
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Veuillez entrer un email valide'],
   },
   password: {
     type: String,
     required: true,
-    minlength: 6
+    minlength: 6,
   },
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user'
+    default: 'user',
   },
   name: {
     type: String,
-    required: true
+    required: true,
   },
   active: {
     type: Boolean,
-    default: true
+    default: true,
   },
   lastLogin: {
-    type: Date
-  }
+    type: Date,
+  },
 }, {
   timestamps: true, // Ajoute createdAt et updatedAt
-  collection: 'users' // Nom explicite pour la collection
+  collection: 'users', // Nom explicite pour la collection
 });
 
 // Hook pre-save pour hacher les mots de passe

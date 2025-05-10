@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-console.log('🔍 Vérification de l'environnement de développement...');
+console.log('🔍 Vérification de l\'environnement de développement...');
 
 // Vérifier que le fichier .env existe
 const envPath = path.join(__dirname, '../.env');
@@ -58,7 +58,7 @@ try {
 
 // Vérifier que les répertoires nécessaires existent
 const dirsToCheck = ['logs', 'uploads', 'public'];
-dirsToCheck.forEach(dir => {
+dirsToCheck.forEach((dir) => {
   const dirPath = path.join(__dirname, '..', dir);
   if (!fs.existsSync(dirPath)) {
     console.error(`❌ Le répertoire "${dir}" n'existe pas. Veuillez le créer.`);
@@ -71,9 +71,18 @@ dirsToCheck.forEach(dir => {
 
 console.log('\n🎉 Votre environnement de développement est prêt!');
 console.log('\nCommandes utiles:');
-console.log('- npm install     : Installer les dépendances');
-console.log('- npm run dev     : Démarrer le serveur en mode développement');
-console.log('- npm test        : Exécuter les tests');
-console.log('- npm run lint    : Vérifier le style du code');
-console.log('- docker compose up -d : Démarrer les services Docker');
-console.log('- git status      : Vérifier l\'état de Git');
+console.log('- npm run setup    : Installation complète (dépendances + Docker)');
+console.log('- npm run dev      : Démarrer le serveur en mode développement');
+console.log('- npm test         : Exécuter les tests');
+console.log('- npm run lint     : Vérifier le style du code');
+console.log('- npm run docker:up : Démarrer les services Docker');
+console.log('- npm run docker:logs : Voir les logs Docker en temps réel');
+console.log('- npm run docker:down : Arrêter les services Docker');
+console.log('- git status       : Vérifier l\'état de Git');
+
+console.log('\nURLs d\'accès:');
+console.log('- Page d\'accueil: http://localhost:80');
+console.log('- API: http://localhost:3000/api');
+console.log('- API de santé: http://localhost:3000/api/health');
+console.log('- MongoDB: mongodb://localhost:27017');
+console.log('- Redis: redis://localhost:6379');
