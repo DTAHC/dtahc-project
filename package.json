@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "build": "echo 'Building project...'",
     "check-env": "node scripts/check-env.js",
+    "security": "node scripts/security-check.js",
     "setup": "npm install && npm run check-env && docker compose up -d",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -33,15 +34,19 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.5.0",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
     "redis": "^4.6.11",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
     "axios": "^1.9.0",
