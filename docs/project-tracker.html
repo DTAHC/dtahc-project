@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTAHC - Tableau de Bord Développement</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #1abc9c;
+            --dark: #34495e;
+            --light: #ecf0f1;
+            --grey: #95a5a6;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .date {
+            font-size: 0.9rem;
+            color: var(--grey);
+        }
+        
+        .card {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .progress-container {
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--grey);
+        }
+        
+        .feature-count {
+            display: flex;
+            justify-content: space-around;
+            margin: 1.5rem 0;
+        }
+        
+        .count-item {
+            text-align: center;
+        }
+        
+        /* Kanban Board */
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+        
+        .kanban-column {
+            background-color: #f7f9fa;
+            border-radius: 8px;
+            min-width: 250px;
+        }
+        
+        .kanban-column-header {
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .kanban-column-header .count {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+        }
+        
+        .kanban-column:nth-child(1) .kanban-column-header {
+            color: var(--grey);
+        }
+        
+        .kanban-column:nth-child(2) .kanban-column-header {
+            color: var(--warning);
+        }
+        
+        .kanban-column:nth-child(3) .kanban-column-header {
+            color: var(--primary);
+        }
+        
+        .kanban-column:nth-child(4) .kanban-column-header {
+            color: var(--info);
+        }
+        
+        .kanban-column:nth-child(5) .kanban-column-header {
+            color: var(--secondary);
+        }
+        
+        .kanban-tasks {
+            padding: 1rem;
+            min-height: 300px;
+        }
+        
+        .task-card {
+            background-color: var(--white);
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-left: 3px solid var(--grey);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .task-card.backend {
+            border-left-color: var(--primary);
+        }
+        
+        .task-card.frontend {
+            border-left-color: var(--secondary);
+        }
+        
+        .task-card.api {
+            border-left-color: var(--info);
+        }
+        
+        .task-card.devops {
+            border-left-color: var(--warning);
+        }
+        
+        .task-card.security {
+            border-left-color: var(--danger);
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-top: 0.8rem;
+        }
+        
+        .task-tags {
+            display: flex;
+            gap: 0.3rem;
+        }
+        
+        .task-tag {
+            background-color: #f0f2f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+        
+        /* Calendar */
+        .calendar {
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .day-header {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--grey);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .calendar-date {
+            aspect-ratio: 1 / 1;
+            border-radius: 5px;
+            background-color: #f7f9fa;
+            padding: 0.3rem;
+            font-size: 0.8rem;
+            position: relative;
+        }
+        
+        .calendar-date .date-number {
+            font-weight: 600;
+        }
+        
+        .calendar-date.has-events {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .calendar-date.has-events::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--primary);
+        }
+        
+        .calendar-date.today {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+        
+        .calendar-date.different-month {
+            color: #ccc;
+            background-color: #fafbfc;
+        }
+        
+        /* Developer Tasks */
+        .dev-tasks {
+            margin-top: 1rem;
+        }
+        
+        .dev-container {
+            margin-top: 1rem;
+        }
+        
+        .dev-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .dev-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--white);
+            font-weight: 600;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .dev-info {
+            flex-grow: 1;
+        }
+        
+        .dev-name {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .dev-role {
+            font-size: 0.8rem;
+            color: var(--grey);
+            margin-bottom: 0.5rem;
+        }
+        
+        .dev-task-list {
+            background-color: #f7f9fa;
+            border-radius: 5px;
+            padding: 0.8rem;
+        }
+        
+        .dev-task-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .dev-task-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Features Comparison */
+        .feature-comparison {
+            display: flex;
+            align-items: stretch;
+            margin-top: 1rem;
+        }
+        
+        .feature-list {
+            flex: 1;
+            padding: 1rem;
+        }
+        
+        .feature-list h3 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature-item {
+            padding: 0.7rem 0;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-item .status-icon {
+            margin-right: 0.5rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
+            color: white;
+        }
+        
+        .status-done {
+            background-color: var(--secondary);
+        }
+        
+        .status-pending {
+            background-color: var(--warning);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .kanban {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .card-large {
+                grid-column: span 2;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kanban {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .card-large {
+                grid-column: span 1;
+            }
+            
+            .feature-comparison {
+                flex-direction: column;
+            }
+            
+            .feature-list {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>DTAHC - Tableau de Bord</h1>
+        <div id="current-date"></div>
+    </header>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h2>Suivi du Développement</h2>
+            <div class="date" id="sprint-info">Sprint 4 - Semaine 2</div>
+        </div>
+
+        <!-- Overview Section -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Avancement Global</div>
+                <div class="stat-value">68%</div>
+                <div class="stat-label">Complétion du projet</div>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Progression</span>
+                        <span>68/100</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 68%; background-color: var(--primary);"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Tâches Actives</div>
+                <div class="feature-count">
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--warning);">12</div>
+                        <div class="stat-label">À faire</div>
+                    </div>
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--primary);">8</div>
+                        <div class="stat-label">En cours</div>
+                    </div>
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--info);">5</div>
+                        <div class="stat-label">Test</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Fonctionnalités</div>
+                <div class="feature-count">
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--secondary);">27</div>
+                        <div class="stat-label">Complétées</div>
+                    </div>
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--warning);">14</div>
+                        <div class="stat-label">En cours</div>
+                    </div>
+                    <div class="count-item">
+                        <div class="stat-value" style="color: var(--grey);">8</div>
+                        <div class="stat-label">Planifiées</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="card card-large">
+            <div class="card-title">
+                Tableau Kanban
+                <span class="date">Mise à jour: aujourd'hui 09:45</span>
+            </div>
+            <div class="kanban">
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span>Backlog</span>
+                        <span class="count">7</span>
+                    </div>
+                    <div class="kanban-tasks">
+                        <div class="task-card frontend">
+                            <div class="task-title">Mise à jour de la UI d'authentification</div>
+                            <div class="task-description">Refonte de l'interface utilisateur pour l'authentification</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Frontend</span>
+                                    <span class="task-tag">UI/UX</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card backend">
+                            <div class="task-title">Optimisation de la base de données</div>
+                            <div class="task-description">Optimiser les requêtes MongoDB</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Backend</span>
+                                    <span class="task-tag">Performance</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card api">
+                            <div class="task-title">Ajout d'endpoints pour l'exportation</div>
+                            <div class="task-description">API pour exporter les données en CSV/Excel</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">API</span>
+                                    <span class="task-tag">Feature</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card security">
+                            <div class="task-title">Audit de sécurité des modules</div>
+                            <div class="task-description">Vérifier les vulnérabilités sur les dépendances</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Sécurité</span>
+                                    <span class="task-tag">Audit</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span>À faire</span>
+                        <span class="count">5</span>
+                    </div>
+                    <div class="kanban-tasks">
+                        <div class="task-card frontend">
+                            <div class="task-title">Implémentation du thème sombre</div>
+                            <div class="task-description">Ajouter une option de thème sombre pour l'interface</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Frontend</span>
+                                    <span class="task-tag">UI/UX</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card backend">
+                            <div class="task-title">Service de notification</div>
+                            <div class="task-description">Créer un service pour l'envoi des notifications</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Backend</span>
+                                    <span class="task-tag">Feature</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card devops">
+                            <div class="task-title">Configuration CI/CD</div>
+                            <div class="task-description">Mettre en place un pipeline CI/CD avec GitHub Actions</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">DevOps</span>
+                                    <span class="task-tag">Infra</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span>En cours</span>
+                        <span class="count">4</span>
+                    </div>
+                    <div class="kanban-tasks">
+                        <div class="task-card backend">
+                            <div class="task-title">Middleware de validation</div>
+                            <div class="task-description">Ajout de validations pour les requêtes entrantes</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Backend</span>
+                                    <span class="task-tag">Sécurité</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card frontend">
+                            <div class="task-title">Tableau de bord utilisateur</div>
+                            <div class="task-description">Création d'un tableau de bord personnalisé</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Frontend</span>
+                                    <span class="task-tag">Core</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card api">
+                            <div class="task-title">Documentation Swagger</div>
+                            <div class="task-description">Documentation des endpoints API avec Swagger</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">API</span>
+                                    <span class="task-tag">Docs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span>Test</span>
+                        <span class="count">3</span>
+                    </div>
+                    <div class="kanban-tasks">
+                        <div class="task-card backend">
+                            <div class="task-title">Service d'authentification</div>
+                            <div class="task-description">Service pour gérer l'authentification et les JWT</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Backend</span>
+                                    <span class="task-tag">Authentification</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card frontend">
+                            <div class="task-title">Composant LockStatus</div>
+                            <div class="task-description">Composant pour afficher l'état de verrouillage des documents</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Frontend</span>
+                                    <span class="task-tag">Component</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span>Terminé</span>
+                        <span class="count">9</span>
+                    </div>
+                    <div class="kanban-tasks">
+                        <div class="task-card backend">
+                            <div class="task-title">Configuration MongoDB</div>
+                            <div class="task-description">Mise en place et configuration de la base de données</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Backend</span>
+                                    <span class="task-tag">Database</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card frontend">
+                            <div class="task-title">Page de connexion</div>
+                            <div class="task-description">Création de la page de connexion utilisateur</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">Frontend</span>
+                                    <span class="task-tag">Auth</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card api">
+                            <div class="task-title">Routes d'authentification</div>
+                            <div class="task-description">Endpoints API pour la gestion de l'authentification</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">API</span>
+                                    <span class="task-tag">Auth</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-card devops">
+                            <div class="task-title">Configuration Docker</div>
+                            <div class="task-description">Préparation des conteneurs Docker pour le développement</div>
+                            <div class="task-meta">
+                                <div class="task-tags">
+                                    <span class="task-tag">DevOps</span>
+                                    <span class="task-tag">Docker</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Comparison -->
+        <div class="card">
+            <div class="card-title">
+                Fonctionnalités Planifiées vs Implémentées
+                <span class="date">Total: 49 fonctionnalités</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>État d'avancement</span>
+                    <span>27/49</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: 55%; background-color: var(--secondary);"></div>
+                </div>
+            </div>
+            <div class="feature-comparison">
+                <div class="feature-list">
+                    <h3>Fonctionnalités Implémentées</h3>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Authentification utilisateur</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Architecture de base du backend</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Configuration de la base de données</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Infrastructure Docker</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Modèle utilisateur</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Routes d'API de base</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Endpoint de santé serveur</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-done">✓</span>
+                        <span>Service de logging</span>
+                    </div>
+                </div>
+                <div class="feature-list">
+                    <h3>Fonctionnalités En Cours</h3>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Middleware de validation</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Documentation Swagger</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Composant de statut de verrouillage</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Tableau de bord utilisateur</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Service de notification</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Configuration CI/CD</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="status-icon status-pending">⟳</span>
+                        <span>Thème sombre</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="card card-large">
+            <div class="card-title">
+                Calendrier de Développement
+                <span class="date">Novembre 2025</span>
+            </div>
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button id="prev-month">&lt; Mois précédent</button>
+                    <h3 id="calendar-title">Novembre 2025</h3>
+                    <button id="next-month">Mois suivant &gt;</button>
+                </div>
+                <div class="calendar-days">
+                    <div class="day-header">Lun</div>
+                    <div class="day-header">Mar</div>
+                    <div class="day-header">Mer</div>
+                    <div class="day-header">Jeu</div>
+                    <div class="day-header">Ven</div>
+                    <div class="day-header">Sam</div>
+                    <div class="day-header">Dim</div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Tasks -->
+        <div class="card">
+            <div class="card-title">
+                Tâches par Développeur
+                <span class="date">5 développeurs actifs</span>
+            </div>
+            <div class="dev-container">
+                <div class="dev-item">
+                    <div class="dev-avatar" style="background-color: #3498db;">TL</div>
+                    <div class="dev-info">
+                        <div class="dev-name">Thomas Leclerc</div>
+                        <div class="dev-role">Lead Developer</div>
+                        <div class="dev-task-list">
+                            <div class="dev-task-item">
+                                <span>Service d'authentification</span>
+                                <span>Test</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Middleware de validation</span>
+                                <span>En cours</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dev-item">
+                    <div class="dev-avatar" style="background-color: #2ecc71;">SM</div>
+                    <div class="dev-info">
+                        <div class="dev-name">Sophie Martin</div>
+                        <div class="dev-role">Frontend Developer</div>
+                        <div class="dev-task-list">
+                            <div class="dev-task-item">
+                                <span>Composant LockStatus</span>
+                                <span>Test</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Tableau de bord utilisateur</span>
+                                <span>En cours</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Implémentation du thème sombre</span>
+                                <span>À faire</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dev-item">
+                    <div class="dev-avatar" style="background-color: #e74c3c;">JD</div>
+                    <div class="dev-info">
+                        <div class="dev-name">Jean Dupont</div>
+                        <div class="dev-role">Backend Developer</div>
+                        <div class="dev-task-list">
+                            <div class="dev-task-item">
+                                <span>Documentation Swagger</span>
+                                <span>En cours</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Service de notification</span>
+                                <span>À faire</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dev-item">
+                    <div class="dev-avatar" style="background-color: #f39c12;">AL</div>
+                    <div class="dev-info">
+                        <div class="dev-name">Antoine Laurent</div>
+                        <div class="dev-role">DevOps Engineer</div>
+                        <div class="dev-task-list">
+                            <div class="dev-task-item">
+                                <span>Configuration CI/CD</span>
+                                <span>À faire</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Audit de sécurité des modules</span>
+                                <span>Backlog</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dev-item">
+                    <div class="dev-avatar" style="background-color: #9b59b6;">MB</div>
+                    <div class="dev-info">
+                        <div class="dev-name">Marie Benoit</div>
+                        <div class="dev-role">Full Stack Developer</div>
+                        <div class="dev-task-list">
+                            <div class="dev-task-item">
+                                <span>Optimisation de la base de données</span>
+                                <span>Backlog</span>
+                            </div>
+                            <div class="dev-task-item">
+                                <span>Ajout d'endpoints pour l'exportation</span>
+                                <span>Backlog</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current Date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('fr-FR', options);
+        }
+        updateCurrentDate();
+        
+        // Calendar Generation
+        function generateCalendar(year, month) {
+            const calendarGrid = document.getElementById('calendar-grid');
+            calendarGrid.innerHTML = '';
+            
+            const calendarTitle = document.getElementById('calendar-title');
+            const date = new Date(year, month);
+            calendarTitle.textContent = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            
+            // First day of the month
+            const firstDay = new Date(year, month, 1);
+            // Last day of the month
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
+            let firstDayOfWeek = firstDay.getDay();
+            // Convert to Monday = 0, Sunday = 6
+            firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+            
+            // Previous month's days
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-date different-month';
+                dayElement.innerHTML = `<div class="date-number">${prevMonthLastDay - firstDayOfWeek + i + 1}</div>`;
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Current month's days
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+            const todayDate = today.getDate();
+            
+            // Events data (example)
+            const events = {
+                '4': ['Début du Sprint 4'],
+                '8': ['Revue de code'],
+                '11': ['Réunion d\'équipe'],
+                '15': ['Demo client'],
+                '18': ['Fin du Sprint 4'],
+                '19': ['Début du Sprint 5'],
+                '22': ['Revue de performance'],
+                '29': ['Planning du Sprint 6']
+            };
+            
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-date';
+                
+                if (isCurrentMonth && day === todayDate) {
+                    dayElement.classList.add('today');
+                }
+                
+                if (events[day]) {
+                    dayElement.classList.add('has-events');
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip';
+                    tooltip.textContent = events[day].join(', ');
+                    dayElement.title = events[day].join(', ');
+                }
+                
+                dayElement.innerHTML = `<div class="date-number">${day}</div>`;
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // Next month's days
+            const totalDaysDisplayed = firstDayOfWeek + lastDay.getDate();
+            const remainingCells = 42 - totalDaysDisplayed; // 6 rows of 7 days
+            
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-date different-month';
+                dayElement.innerHTML = `<div class="date-number">${i}</div>`;
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+        
+        // Initialize calendar
+        const currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonth = currentDate.getMonth();
+        generateCalendar(currentYear, currentMonth);
+        
+        // Calendar navigation
+        document.getElementById('prev-month').addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            generateCalendar(currentYear, currentMonth);
+        });
+        
+        document.getElementById('next-month').addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentYear, currentMonth);
+        });
+    </script>
+</body>
+</html>
