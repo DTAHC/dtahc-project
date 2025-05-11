@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTAHC - Métriques</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--secondary);
+        }
+        
+        .nav-links a.active {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+        
+        .metrics-filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .metric-options button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+        
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 0.5rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .summary-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .summary-trend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .trend-up {
+            color: var(--success);
+        }
+        
+        .trend-down {
+            color: var(--accent);
+        }
+        
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 500px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Canvas styling for charts */
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">DTAHC</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="kanban.html">Kanban</a></li>
+                <li><a href="metrics.html" class="active">Métriques</a></li>
+                <li><a href="dashboard.html">Tableau de bord</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <h1>Métriques et rapports</h1>
+        
+        <div class="metrics-filters">
+            <div class="filter-group">
+                <span class="filter-label">Période:</span>
+                <select id="period-filter">
+                    <option value="7">7 derniers jours</option>
+                    <option value="30" selected>30 derniers jours</option>
+                    <option value="90">90 derniers jours</option>
+                    <option value="365">12 derniers mois</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Gestionnaire:</span>
+                <select id="manager-filter">
+                    <option value="all" selected>Tous</option>
+                    <option value="1">Jacques Martin</option>
+                    <option value="2">Marie Dubois</option>
+                    <option value="3">Thomas Bernard</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Type de dossier:</span>
+                <select id="case-type-filter">
+                    <option value="all" selected>Tous les types</option>
+                    <option value="legal">Juridique</option>
+                    <option value="financial">Financier</option>
+                    <option value="administrative">Administratif</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-title">Dossiers actifs</div>
+                <div class="summary-value">42</div>
+                <div class="summary-trend trend-up">
+                    <span>+12%</span>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-title">Taux de complétion</div>
+                <div class="summary-value">87%</div>
+                <div class="summary-trend trend-up">
+                    <span>+5%</span>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-title">Temps moyen de traitement</div>
+                <div class="summary-value">13j</div>
+                <div class="summary-trend trend-down">
+                    <span>-2j</span>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-title">Satisfaction client</div>
+                <div class="summary-value">4.8</div>
+                <div class="summary-trend trend-up">
+                    <span>+0.3</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Progression des dossiers</div>
+                    <div class="metric-options">
+                        <button>⋮</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f39c12;"></div>
+                        <span>À faire</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db;"></div>
+                        <span>En cours</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2ecc71;"></div>
+                        <span>Terminé</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Nouveaux dossiers</div>
+                    <div class="metric-options">
+                        <button>⋮</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="newCasesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Répartition par type</div>
+                    <div class="metric-options">
+                        <button>⋮</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="typeDistributionChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db;"></div>
+                        <span>Juridique</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2ecc71;"></div>
+                        <span>Financier</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f39c12;"></div>
+                        <span>Administratif</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Temps de traitement</div>
+                    <div class="metric-options">
+                        <button>⋮</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="processingTimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 DTAHC - Tous droits réservés</p>
+    </footer>
+    
+    <script>
+        // Mock data for charts
+        function generateRandomData(count, min, max) {
+            return Array.from({ length: count }, () => Math.floor(Math.random() * (max - min + 1) + min));
+        }
+        
+        function generateDates(count) {
+            const dates = [];
+            const today = new Date();
+            
+            for (let i = count - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(today.getDate() - i);
+                dates.push(`${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`);
+            }
+            
+            return dates;
+        }
+        
+        // Progress Chart (Stacked Bar Chart)
+        const progressCtx = document.getElementById('progressChart').getContext('2d');
+        const progressData = {
+            labels: generateDates(7),
+            datasets: [
+                {
+                    label: 'À faire',
+                    data: generateRandomData(7, 3, 8),
+                    backgroundColor: '#f39c12',
+                },
+                {
+                    label: 'En cours',
+                    data: generateRandomData(7, 5, 15),
+                    backgroundColor: '#3498db',
+                },
+                {
+                    label: 'Terminé',
+                    data: generateRandomData(7, 10, 25),
+                    backgroundColor: '#2ecc71',
+                }
+            ]
+        };
+        
+        // Draw the progress chart with stacked bars
+        const progressChart = new Chart(progressCtx, {
+            type: 'bar',
+            data: progressData,
+            options: {
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                },
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // New Cases Chart (Line Chart)
+        const newCasesCtx = document.getElementById('newCasesChart').getContext('2d');
+        const newCasesData = {
+            labels: generateDates(30),
+            datasets: [{
+                label: 'Nouveaux dossiers',
+                data: generateRandomData(30, 0, 5),
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                borderColor: '#3498db',
+                borderWidth: 2,
+                pointBackgroundColor: '#3498db',
+                tension: 0.4
+            }]
+        };
+        
+        // Draw the new cases line chart
+        const newCasesChart = new Chart(newCasesCtx, {
+            type: 'line',
+            data: newCasesData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Type Distribution Chart (Doughnut Chart)
+        const typeDistributionCtx = document.getElementById('typeDistributionChart').getContext('2d');
+        const typeDistributionData = {
+            labels: ['Juridique', 'Financier', 'Administratif'],
+            datasets: [{
+                data: [42, 23, 35],
+                backgroundColor: ['#3498db', '#2ecc71', '#f39c12'],
+                borderWidth: 0
+            }]
+        };
+        
+        // Draw the type distribution doughnut chart
+        const typeDistributionChart = new Chart(typeDistributionCtx, {
+            type: 'doughnut',
+            data: typeDistributionData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+        
+        // Processing Time Chart (Bar Chart)
+        const processingTimeCtx = document.getElementById('processingTimeChart').getContext('2d');
+        const processingTimeData = {
+            labels: ['Juridique', 'Financier', 'Administratif'],
+            datasets: [{
+                label: 'Temps moyen (jours)',
+                data: [14, 10, 7],
+                backgroundColor: [
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(243, 156, 18, 0.7)'
+                ],
+                borderColor: [
+                    '#3498db',
+                    '#2ecc71',
+                    '#f39c12'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        // Draw the processing time bar chart
+        const processingTimeChart = new Chart(processingTimeCtx, {
+            type: 'bar',
+            data: processingTimeData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Filter change events
+        document.getElementById('period-filter').addEventListener('change', updateCharts);
+        document.getElementById('manager-filter').addEventListener('change', updateCharts);
+        document.getElementById('case-type-filter').addEventListener('change', updateCharts);
+        
+        function updateCharts() {
+            // Simulate chart data updates
+            
+            // Update progress chart with new random data
+            progressChart.data.datasets.forEach((dataset, index) => {
+                dataset.data = generateRandomData(7, 3 + index * 2, 8 + index * 5);
+            });
+            progressChart.update();
+            
+            // Update new cases chart
+            const days = parseInt(document.getElementById('period-filter').value);
+            newCasesChart.data.labels = generateDates(days);
+            newCasesChart.data.datasets[0].data = generateRandomData(days, 0, 5);
+            newCasesChart.update();
+            
+            // Update type distribution chart
+            typeDistributionChart.data.datasets[0].data = [
+                Math.floor(Math.random() * 30) + 20,
+                Math.floor(Math.random() * 20) + 15,
+                Math.floor(Math.random() * 25) + 20
+            ];
+            typeDistributionChart.update();
+            
+            // Update processing time chart
+            processingTimeChart.data.datasets[0].data = [
+                Math.floor(Math.random() * 5) + 10,
+                Math.floor(Math.random() * 5) + 8,
+                Math.floor(Math.random() * 4) + 5
+            ];
+            processingTimeChart.update();
+            
+            // Update summary cards
+            document.querySelector('.summary-grid .summary-value:nth-child(2)').textContent = 
+                Math.floor(Math.random() * 20) + 30;
+        }
+    </script>
+    
+    <!-- Add Chart.js library for charts -->
+    <script>
+        // Simple Chart.js implementation for demo purposes
+        class Chart {
+            constructor(ctx, config) {
+                this.ctx = ctx;
+                this.config = config;
+                this.data = config.data;
+                this.options = config.options || {};
+                this.type = config.type;
+                
+                // Render the initial chart
+                this.render();
+            }
+            
+            render() {
+                const ctx = this.ctx;
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Draw based on chart type
+                switch(this.type) {
+                    case 'bar':
+                        this.drawBarChart();
+                        break;
+                    case 'line':
+                        this.drawLineChart();
+                        break;
+                    case 'doughnut':
+                        this.drawDoughnutChart();
+                        break;
+                    default:
+                        console.error('Unsupported chart type:', this.type);
+                }
+            }
+            
+            drawBarChart() {
+                const ctx = this.ctx;
+                const data = this.data;
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const datasets = data.datasets;
+                const labels = data.labels;
+                const isStacked = this.options.scales?.x?.stacked;
+                
+                const barCount = labels.length;
+                const datasetCount = datasets.length;
+                const barWidth = isStacked ? 
+                    (width - 60) / barCount :
+                    (width - 60) / (barCount * datasetCount);
+                const barSpacing = 5;
+                
+                // Find the max value for scaling
+                let maxValue = 0;
+                if (isStacked) {
+                    // For stacked bars, sum the values at each position
+                    for (let i = 0; i < barCount; i++) {
+                        let stackSum = 0;
+                        for (let j = 0; j < datasetCount; j++) {
+                            stackSum += datasets[j].data[i];
+                        }
+                        maxValue = Math.max(maxValue, stackSum);
+                    }
+                } else {
+                    // For regular bars, find the max value across all datasets
+                    datasets.forEach(dataset => {
+                        dataset.data.forEach(value => {
+                            maxValue = Math.max(maxValue, value);
+                        });
+                    });
+                }
+                
+                // Add 10% padding to the max value
+                maxValue = maxValue * 1.1;
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(40, 20);
+                ctx.lineTo(40, height - 40);
+                ctx.lineTo(width - 20, height - 40);
+                ctx.strokeStyle = '#ccc';
+                ctx.stroke();
+                
+                // Draw horizontal grid lines
+                const gridLines = 5;
+                for (let i = 0; i <= gridLines; i++) {
+                    const y = 20 + ((height - 60) / gridLines) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(40, y);
+                    ctx.lineTo(width - 20, y);
+                    ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+                    ctx.stroke();
+                    
+                    // Add y-axis labels
+                    ctx.fillStyle = '#888';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'right';
+                    const labelValue = Math.round(maxValue - (maxValue / gridLines) * i);
+                    ctx.fillText(labelValue, 35, y + 4);
+                }
+                
+                // Draw bars
+                if (isStacked) {
+                    // Draw stacked bars
+                    for (let i = 0; i < barCount; i++) {
+                        let barHeight = 0;
+                        let barY = height - 40;
+                        
+                        for (let j = 0; j < datasetCount; j++) {
+                            const dataset = datasets[j];
+                            const value = dataset.data[i];
+                            const segmentHeight = (value / maxValue) * (height - 60);
+                            
+                            ctx.fillStyle = dataset.backgroundColor;
+                            ctx.fillRect(
+                                40 + i * ((width - 60) / barCount),
+                                barY - segmentHeight,
+                                barWidth - barSpacing,
+                                segmentHeight
+                            );
+                            
+                            barY -= segmentHeight;
+                        }
+                        
+                        // Draw x-axis labels
+                        ctx.fillStyle = '#888';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(
+                            labels[i], 
+                            40 + i * ((width - 60) / barCount) + (barWidth - barSpacing) / 2, 
+                            height - 25
+                        );
+                    }
+                } else {
+                    // Draw regular bars
+                    for (let i = 0; i < barCount; i++) {
+                        for (let j = 0; j < datasetCount; j++) {
+                            const dataset = datasets[j];
+                            const value = dataset.data[i];
+                            const barHeight = (value / maxValue) * (height - 60);
+                            
+                            ctx.fillStyle = Array.isArray(dataset.backgroundColor) ? 
+                                dataset.backgroundColor[i] : dataset.backgroundColor;
+                            
+                            ctx.fillRect(
+                                40 + (i * datasetCount + j) * barWidth,
+                                height - 40 - barHeight,
+                                barWidth - barSpacing,
+                                barHeight
+                            );
+                        }
+                        
+                        // Draw x-axis labels
+                        ctx.fillStyle = '#888';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(
+                            labels[i], 
+                            40 + (i * datasetCount + datasetCount/2) * barWidth, 
+                            height - 25
+                        );
+                    }
+                }
+            }
+            
+            drawLineChart() {
+                const ctx = this.ctx;
+                const data = this.data;
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const dataset = data.datasets[0]; // Just handle one dataset for simplicity
+                const labels = data.labels;
+                const values = dataset.data;
+                
+                // Find the max value for scaling
+                const maxValue = Math.max(...values) * 1.1;
+                
+                // Draw axes
+                ctx.beginPath();
+                ctx.moveTo(40, 20);
+                ctx.lineTo(40, height - 40);
+                ctx.lineTo(width - 20, height - 40);
+                ctx.strokeStyle = '#ccc';
+                ctx.stroke();
+                
+                // Draw horizontal grid lines
+                const gridLines = 5;
+                for (let i = 0; i <= gridLines; i++) {
+                    const y = 20 + ((height - 60) / gridLines) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(40, y);
+                    ctx.lineTo(width - 20, y);
+                    ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+                    ctx.stroke();
+                    
+                    // Add y-axis labels
+                    ctx.fillStyle = '#888';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'right';
+                    const labelValue = Math.round(maxValue - (maxValue / gridLines) * i);
+                    ctx.fillText(labelValue, 35, y + 4);
+                }
+                
+                // Draw the line
+                ctx.beginPath();
+                for (let i = 0; i < values.length; i++) {
+                    const x = 40 + i * ((width - 60) / (values.length - 1));
+                    const y = height - 40 - (values[i] / maxValue) * (height - 60);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    // Draw x-axis labels for every 5th point to avoid clutter
+                    if (i % 5 === 0 || i === values.length - 1) {
+                        ctx.fillStyle = '#888';
+                        ctx.font = '10px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(labels[i], x, height - 25);
+                    }
+                }
+                
+                ctx.strokeStyle = dataset.borderColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw the area under the line
+                ctx.lineTo(40 + (values.length - 1) * ((width - 60) / (values.length - 1)), height - 40);
+                ctx.lineTo(40, height - 40);
+                ctx.fillStyle = dataset.backgroundColor;
+                ctx.fill();
+                
+                // Draw data points
+                for (let i = 0; i < values.length; i++) {
+                    const x = 40 + i * ((width - 60) / (values.length - 1));
+                    const y = height - 40 - (values[i] / maxValue) * (height - 60);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = dataset.pointBackgroundColor || dataset.borderColor;
+                    ctx.fill();
+                }
+            }
+            
+            drawDoughnutChart() {
+                const ctx = this.ctx;
+                const data = this.data;
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const dataset = data.datasets[0];
+                const labels = data.labels;
+                const values = dataset.data;
+                
+                // Calculate total
+                const total = values.reduce((a, b) => a + b, 0);
+                
+                // Calculate center and radius
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2 - 20;
+                const innerRadius = radius * (this.options.cutout ? parseInt(this.options.cutout) / 100 : 0.5);
+                
+                // Draw doughnut segments
+                let startAngle = -Math.PI / 2; // Start at the top
+                
+                for (let i = 0; i < values.length; i++) {
+                    const value = values[i];
+                    const sliceAngle = (value / total) * (Math.PI * 2);
+                    const endAngle = startAngle + sliceAngle;
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.arc(centerX, centerY, innerRadius, endAngle, startAngle, true);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = Array.isArray(dataset.backgroundColor) ? 
+                        dataset.backgroundColor[i] : dataset.backgroundColor;
+                    ctx.fill();
+                    
+                    // Add percentage label
+                    const percentage = Math.round((value / total) * 100);
+                    if (percentage > 5) { // Only show label if segment is large enough
+                        const labelAngle = startAngle + sliceAngle / 2;
+                        const labelRadius = (radius + innerRadius) / 2;
+                        const labelX = centerX + Math.cos(labelAngle) * labelRadius;
+                        const labelY = centerY + Math.sin(labelAngle) * labelRadius;
+                        
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(percentage + '%', labelX, labelY);
+                    }
+                    
+                    startAngle = endAngle;
+                }
+                
+                // Draw center circle (for doughnut effect)
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+            }
+            
+            update() {
+                this.render();
+            }
+        }
+    </script>
+</body>
+</html>

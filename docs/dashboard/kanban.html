@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTAHC - Tableau Kanban</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--secondary);
+        }
+        
+        .nav-links a.active {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+        
+        .kanban-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .new-task-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .new-task-btn:hover {
+            background: #2980b9;
+        }
+        
+        .kanban-board {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+        
+        .kanban-column {
+            background: white;
+            border-radius: 8px;
+            min-width: 300px;
+            width: calc(33.333% - 1rem);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .column-header {
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .column-todo .column-header {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .column-progress .column-header {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary);
+        }
+        
+        .column-done .column-header {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .task-count {
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+        }
+        
+        .task-list {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 400px;
+        }
+        
+        .task {
+            background: white;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 3px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .task:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .task.priority-high {
+            border-left-color: var(--accent);
+        }
+        
+        .task.priority-medium {
+            border-left-color: var(--warning);
+        }
+        
+        .task.priority-low {
+            border-left-color: var(--success);
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .task-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .task-priority {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .priority-high {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .priority-medium {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .priority-low {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+        
+        .modal-body {
+            padding: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .modal-footer {
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+        
+        .btn-cancel {
+            background: #ddd;
+            color: #333;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-save {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .kanban-board {
+                flex-direction: column;
+            }
+            
+            .kanban-column {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">DTAHC</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="kanban.html" class="active">Kanban</a></li>
+                <li><a href="metrics.html">Métriques</a></li>
+                <li><a href="dashboard.html">Tableau de bord</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <h1>Tableau Kanban</h1>
+        
+        <div class="kanban-actions">
+            <div>
+                <button class="new-task-btn" id="newTaskBtn">+ Nouvelle tâche</button>
+            </div>
+        </div>
+        
+        <div class="kanban-board">
+            <div class="kanban-column column-todo">
+                <div class="column-header">
+                    À faire <span class="task-count">3</span>
+                </div>
+                <div class="task-list" id="todo-list">
+                    <div class="task priority-high" draggable="true">
+                        <div class="task-title">Analyser les besoins clients</div>
+                        <div class="task-desc">Entretien avec le client pour déterminer les exigences spécifiques de son dossier.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-high">Élevée</span>
+                            <span class="task-date">15/05/2025</span>
+                        </div>
+                    </div>
+                    <div class="task priority-medium" draggable="true">
+                        <div class="task-title">Préparer le dossier juridique</div>
+                        <div class="task-desc">Rassembler tous les documents et formulaires nécessaires pour le dossier client.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-medium">Moyenne</span>
+                            <span class="task-date">18/05/2025</span>
+                        </div>
+                    </div>
+                    <div class="task priority-low" draggable="true">
+                        <div class="task-title">Mettre à jour la base de données</div>
+                        <div class="task-desc">Ajouter les nouvelles informations clients dans le système de gestion.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-low">Basse</span>
+                            <span class="task-date">20/05/2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kanban-column column-progress">
+                <div class="column-header">
+                    En cours <span class="task-count">2</span>
+                </div>
+                <div class="task-list" id="progress-list">
+                    <div class="task priority-high" draggable="true">
+                        <div class="task-title">Rédaction du contrat</div>
+                        <div class="task-desc">Préparer le contrat selon les spécifications du client et les exigences légales.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-high">Élevée</span>
+                            <span class="task-date">12/05/2025</span>
+                        </div>
+                    </div>
+                    <div class="task priority-medium" draggable="true">
+                        <div class="task-title">Consultation avec l'expert</div>
+                        <div class="task-desc">Organiser une réunion avec l'expert-comptable pour valider les aspects financiers.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-medium">Moyenne</span>
+                            <span class="task-date">14/05/2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kanban-column column-done">
+                <div class="column-header">
+                    Terminé <span class="task-count">2</span>
+                </div>
+                <div class="task-list" id="done-list">
+                    <div class="task priority-high" draggable="true">
+                        <div class="task-title">Prise de contact client</div>
+                        <div class="task-desc">Premier appel avec le client pour comprendre ses besoins et présenter nos services.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-high">Élevée</span>
+                            <span class="task-date">05/05/2025</span>
+                        </div>
+                    </div>
+                    <div class="task priority-low" draggable="true">
+                        <div class="task-title">Création du dossier client</div>
+                        <div class="task-desc">Initialiser le dossier client dans le système avec les informations de base.</div>
+                        <div class="task-meta">
+                            <span class="task-priority priority-low">Basse</span>
+                            <span class="task-date">06/05/2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nouvelle tâche</div>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Titre</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDesc">Description</label>
+                        <textarea id="taskDesc" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">Priorité</label>
+                        <select id="taskPriority">
+                            <option value="high">Élevée</option>
+                            <option value="medium">Moyenne</option>
+                            <option value="low">Basse</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDate">Date d'échéance</label>
+                        <input type="date" id="taskDate" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelTask">Annuler</button>
+                <button class="btn-save" id="saveTask">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 DTAHC - Tous droits réservés</p>
+    </footer>
+    
+    <script>
+        // DOM Elements
+        const newTaskBtn = document.getElementById('newTaskBtn');
+        const taskModal = document.getElementById('taskModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelTask = document.getElementById('cancelTask');
+        const saveTask = document.getElementById('saveTask');
+        const taskForm = document.getElementById('taskForm');
+        const todoList = document.getElementById('todo-list');
+        
+        // Event Listeners
+        newTaskBtn.addEventListener('click', () => {
+            taskModal.style.display = 'flex';
+        });
+        
+        closeModal.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+        
+        cancelTask.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === taskModal) {
+                taskModal.style.display = 'none';
+            }
+        });
+        
+        // Save task
+        saveTask.addEventListener('click', () => {
+            const title = document.getElementById('taskTitle').value;
+            const desc = document.getElementById('taskDesc').value;
+            const priority = document.getElementById('taskPriority').value;
+            const date = document.getElementById('taskDate').value;
+            
+            if (!title || !desc || !date) {
+                alert('Veuillez remplir tous les champs obligatoires');
+                return;
+            }
+            
+            // Format date
+            const dateObj = new Date(date);
+            const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+            
+            // Create new task element
+            const newTask = document.createElement('div');
+            newTask.className = `task priority-${priority}`;
+            newTask.setAttribute('draggable', 'true');
+            newTask.innerHTML = `
+                <div class="task-title">${title}</div>
+                <div class="task-desc">${desc}</div>
+                <div class="task-meta">
+                    <span class="task-priority priority-${priority}">${priority === 'high' ? 'Élevée' : priority === 'medium' ? 'Moyenne' : 'Basse'}</span>
+                    <span class="task-date">${formattedDate}</span>
+                </div>
+            `;
+            
+            // Add to todo list
+            todoList.prepend(newTask);
+            
+            // Update task count
+            const todoCount = document.querySelector('.column-todo .task-count');
+            todoCount.textContent = todoList.children.length;
+            
+            // Reset form and close modal
+            taskForm.reset();
+            taskModal.style.display = 'none';
+            
+            // Add drag events to new task
+            addDragEvents(newTask);
+        });
+        
+        // Drag and Drop Functionality
+        const tasks = document.querySelectorAll('.task');
+        const lists = document.querySelectorAll('.task-list');
+        
+        function addDragEvents(task) {
+            task.addEventListener('dragstart', () => {
+                task.classList.add('dragging');
+            });
+            
+            task.addEventListener('dragend', () => {
+                task.classList.remove('dragging');
+                updateTaskCounts();
+            });
+        }
+        
+        // Add drag events to existing tasks
+        tasks.forEach(task => {
+            addDragEvents(task);
+        });
+        
+        // Add drop events to lists
+        lists.forEach(list => {
+            list.addEventListener('dragover', e => {
+                e.preventDefault();
+                const dragging = document.querySelector('.dragging');
+                list.appendChild(dragging);
+            });
+        });
+        
+        // Update task counts
+        function updateTaskCounts() {
+            const todoCount = document.querySelector('.column-todo .task-count');
+            const progressCount = document.querySelector('.column-progress .task-count');
+            const doneCount = document.querySelector('.column-done .task-count');
+            
+            todoCount.textContent = document.getElementById('todo-list').children.length;
+            progressCount.textContent = document.getElementById('progress-list').children.length;
+            doneCount.textContent = document.getElementById('done-list').children.length;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTAHC - Tableau de bord principal</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--secondary);
+        }
+        
+        .nav-links a.active {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+        
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .date-filter select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-card .card-title {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .stat-card .stat-info {
+            font-size: 0.9rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-trend-up {
+            color: var(--success);
+            margin-right: 0.5rem;
+        }
+        
+        .stat-trend-down {
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+        }
+        
+        .activity-feed {
+            grid-column: 1;
+            grid-row: span 2;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        
+        .card-action {
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            flex-shrink: 0;
+        }
+        
+        .activity-icon.file {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .activity-icon.user {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .activity-icon.alert {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .activity-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .activity-time {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+        
+        .task-progress {
+            grid-column: 2;
+        }
+        
+        .progress-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        
+        .progress-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .progress-value {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .progress-fill.high {
+            background: var(--success);
+        }
+        
+        .progress-fill.medium {
+            background: var(--warning);
+        }
+        
+        .progress-fill.low {
+            background: var(--accent);
+        }
+        
+        .upcoming-deadlines {
+            grid-column: 2;
+        }
+        
+        .deadline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        
+        .deadline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #ddd;
+        }
+        
+        .deadline-item.urgent {
+            border-left-color: var(--accent);
+        }
+        
+        .deadline-item.soon {
+            border-left-color: var(--warning);
+        }
+        
+        .deadline-item.planned {
+            border-left-color: var(--success);
+        }
+        
+        .deadline-details {
+            flex: 1;
+        }
+        
+        .deadline-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .deadline-meta {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .deadline-date {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .deadline-item.urgent .deadline-date {
+            color: var(--accent);
+        }
+        
+        .deadline-item.soon .deadline-date {
+            color: var(--warning);
+        }
+        
+        .case-table-container {
+            grid-column: 1 / -1;
+            overflow-x: auto;
+        }
+        
+        .case-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .case-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 2px solid #eee;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .case-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .case-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .case-table td:first-child {
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-new {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--secondary);
+        }
+        
+        .status-progress {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-ready {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+        }
+        
+        .status-delayed {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .priority-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .priority-high {
+            background-color: var(--accent);
+        }
+        
+        .priority-medium {
+            background-color: var(--warning);
+        }
+        
+        .priority-low {
+            background-color: var(--success);
+        }
+        
+        footer {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .overview-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .activity-feed, .task-progress, .upcoming-deadlines {
+                grid-column: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .date-filter {
+                display: none;
+            }
+            
+            .overview-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">DTAHC</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="kanban.html">Kanban</a></li>
+                <li><a href="metrics.html">Métriques</a></li>
+                <li><a href="dashboard.html" class="active">Tableau de bord</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="dashboard-header">
+            <h1>Tableau de bord principal</h1>
+            <div class="date-filter">
+                <span>Période: </span>
+                <select id="period-filter">
+                    <option value="day">Aujourd'hui</option>
+                    <option value="week" selected>Cette semaine</option>
+                    <option value="month">Ce mois</option>
+                    <option value="quarter">Ce trimestre</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="overview-cards">
+            <div class="card stat-card">
+                <div class="card-title">Dossiers actifs</div>
+                <div class="stat-value">42</div>
+                <div class="stat-info">
+                    <span class="stat-trend-up">↑ 12%</span>
+                    <span>depuis la dernière période</span>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="card-title">Taux de complétion</div>
+                <div class="stat-value">87%</div>
+                <div class="stat-info">
+                    <span class="stat-trend-up">↑ 5%</span>
+                    <span>depuis la dernière période</span>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="card-title">Temps moyen traitement</div>
+                <div class="stat-value">13j</div>
+                <div class="stat-info">
+                    <span class="stat-trend-down">↓ 2j</span>
+                    <span>d'amélioration</span>
+                </div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="card-title">Satisfaction client</div>
+                <div class="stat-value">4.8</div>
+                <div class="stat-info">
+                    <span class="stat-trend-up">↑ 0.3</span>
+                    <span>depuis la dernière période</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="card activity-feed">
+                <div class="card-header">
+                    <div class="card-title">Activités récentes</div>
+                    <a href="#" class="card-action">Voir tout</a>
+                </div>
+                
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon file">📄</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Nouveau dossier créé</div>
+                            <div class="activity-desc">Dossier client "Dupont Entreprises" créé par Marie Dubois</div>
+                            <div class="activity-time">Il y a 2 heures</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">📝</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Document mis à jour</div>
+                            <div class="activity-desc">Contrat commercial modifié par Thomas Bernard pour "Martin & Fils"</div>
+                            <div class="activity-time">Il y a 4 heures</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon user">👤</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Client contacté</div>
+                            <div class="activity-desc">Appel avec Mme. Lefevre concernant son dossier fiscal</div>
+                            <div class="activity-time">Il y a 5 heures</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon alert">⚠️</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Echéance imminente</div>
+                            <div class="activity-desc">Le dossier "Société ABC" nécessite une attention immédiate</div>
+                            <div class="activity-time">Il y a 1 jour</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon file">✓</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Dossier complété</div>
+                            <div class="activity-desc">Le dossier "Immobilier XYZ" a été finalisé par Jacques Martin</div>
+                            <div class="activity-time">Il y a 1 jour</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">📊</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Rapport généré</div>
+                            <div class="activity-desc">Rapport trimestriel créé pour "Investissements Global"</div>
+                            <div class="activity-time">Il y a 2 jours</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card task-progress">
+                <div class="card-header">
+                    <div class="card-title">Progression des dossiers</div>
+                    <a href="kanban.html" class="card-action">Gérer</a>
+                </div>
+                
+                <div class="progress-bars">
+                    <div class="progress-item">
+                        <div class="progress-title">
+                            <div class="progress-label">Contrat Dupont Entreprises</div>
+                            <div class="progress-value">80%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill high" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-title">
+                            <div class="progress-label">Audit financier Martin & Fils</div>
+                            <div class="progress-value">65%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill medium" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-title">
+                            <div class="progress-label">Dossier fiscal Lefevre</div>
+                            <div class="progress-value">45%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill medium" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-title">
+                            <div class="progress-label">Restructuration Société ABC</div>
+                            <div class="progress-value">30%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill low" style="width: 30%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-title">
+                            <div class="progress-label">Étude Investissements Global</div>
+                            <div class="progress-value">90%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill high" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card upcoming-deadlines">
+                <div class="card-header">
+                    <div class="card-title">Échéances à venir</div>
+                    <a href="#" class="card-action">Calendrier</a>
+                </div>
+                
+                <div class="deadline-list">
+                    <div class="deadline-item urgent">
+                        <div class="deadline-details">
+                            <div class="deadline-title">Finalisation contrat Dupont</div>
+                            <div class="deadline-meta">Assigné à Marie Dubois</div>
+                        </div>
+                        <div class="deadline-date">Aujourd'hui</div>
+                    </div>
+                    
+                    <div class="deadline-item urgent">
+                        <div class="deadline-details">
+                            <div class="deadline-title">Audit préliminaire Martin & Fils</div>
+                            <div class="deadline-meta">Assigné à Thomas Bernard</div>
+                        </div>
+                        <div class="deadline-date">Demain</div>
+                    </div>
+                    
+                    <div class="deadline-item soon">
+                        <div class="deadline-details">
+                            <div class="deadline-title">Réunion client Lefevre</div>
+                            <div class="deadline-meta">Assigné à Jacques Martin</div>
+                        </div>
+                        <div class="deadline-date">Dans 3 jours</div>
+                    </div>
+                    
+                    <div class="deadline-item planned">
+                        <div class="deadline-details">
+                            <div class="deadline-title">Présentation plan Société ABC</div>
+                            <div class="deadline-meta">Assigné à Marie Dubois</div>
+                        </div>
+                        <div class="deadline-date">15/05/2025</div>
+                    </div>
+                    
+                    <div class="deadline-item planned">
+                        <div class="deadline-details">
+                            <div class="deadline-title">Rapport final Investissements</div>
+                            <div class="deadline-meta">Assigné à Thomas Bernard</div>
+                        </div>
+                        <div class="deadline-date">20/05/2025</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card case-table-container">
+                <div class="card-header">
+                    <div class="card-title">Dossiers récents</div>
+                    <a href="#" class="card-action">Voir tout</a>
+                </div>
+                
+                <table class="case-table">
+                    <thead>
+                        <tr>
+                            <th>Référence</th>
+                            <th>Client</th>
+                            <th>Type</th>
+                            <th>Gestionnaire</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Dernière MàJ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DPT-2025-042</td>
+                            <td>Dupont Entreprises</td>
+                            <td>Contrat commercial</td>
+                            <td>Marie Dubois</td>
+                            <td><span class="status-badge status-progress">En cours</span></td>
+                            <td><span class="priority-dot priority-high"></span> Élevée</td>
+                            <td>11/05/2025</td>
+                        </tr>
+                        <tr>
+                            <td>MRT-2025-038</td>
+                            <td>Martin & Fils</td>
+                            <td>Audit financier</td>
+                            <td>Thomas Bernard</td>
+                            <td><span class="status-badge status-progress">En cours</span></td>
+                            <td><span class="priority-dot priority-medium"></span> Moyenne</td>
+                            <td>10/05/2025</td>
+                        </tr>
+                        <tr>
+                            <td>LFV-2025-036</td>
+                            <td>Mme. Lefevre</td>
+                            <td>Dossier fiscal</td>
+                            <td>Jacques Martin</td>
+                            <td><span class="status-badge status-new">Nouveau</span></td>
+                            <td><span class="priority-dot priority-medium"></span> Moyenne</td>
+                            <td>09/05/2025</td>
+                        </tr>
+                        <tr>
+                            <td>ABC-2025-029</td>
+                            <td>Société ABC</td>
+                            <td>Restructuration</td>
+                            <td>Marie Dubois</td>
+                            <td><span class="status-badge status-delayed">En retard</span></td>
+                            <td><span class="priority-dot priority-high"></span> Élevée</td>
+                            <td>05/05/2025</td>
+                        </tr>
+                        <tr>
+                            <td>IMG-2025-021</td>
+                            <td>Investissements Global</td>
+                            <td>Étude de marché</td>
+                            <td>Thomas Bernard</td>
+                            <td><span class="status-badge status-ready">Prêt</span></td>
+                            <td><span class="priority-dot priority-low"></span> Basse</td>
+                            <td>02/05/2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 DTAHC - Tous droits réservés</p>
+    </footer>
+    
+    <script>
+        // Filter change event
+        document.getElementById('period-filter').addEventListener('change', function() {
+            console.log('Période changée:', this.value);
+            // In a real application, this would fetch new data based on the selected period
+        });
+        
+        // Mock data for a real application - simulated data refresh
+        function refreshDashboardData() {
+            // Update stats with random variations
+            const statValues = document.querySelectorAll('.stat-value');
+            const newValues = [
+                Math.floor(Math.random() * 10) + 40,  // Active cases: 40-50
+                (Math.floor(Math.random() * 10) + 80) + '%', // Completion rate: 80-90%
+                Math.floor(Math.random() * 5) + 10 + 'j', // Average time: 10-15 days
+                (Math.floor(Math.random() * 10) / 10 + 4.5).toFixed(1) // Satisfaction: 4.5-5.0
+            ];
+            
+            statValues.forEach((statValue, index) => {
+                statValue.textContent = newValues[index];
+            });
+            
+            // Update progress bars with random progress
+            const progressFills = document.querySelectorAll('.progress-fill');
+            const progressValues = document.querySelectorAll('.progress-value');
+            
+            progressFills.forEach((fill, index) => {
+                const newProgress = Math.floor(Math.random() * 50) + 30; // 30-80%
+                fill.style.width = newProgress + '%';
+                progressValues[index].textContent = newProgress + '%';
+                
+                // Update color based on progress
+                fill.className = 'progress-fill';
+                if (newProgress >= 70) {
+                    fill.classList.add('high');
+                } else if (newProgress >= 40) {
+                    fill.classList.add('medium');
+                } else {
+                    fill.classList.add('low');
+                }
+            });
+        }
+        
+        // Refresh data every 30 seconds in a real application
+        // For demo purposes, uncomment this line
+        // setInterval(refreshDashboardData, 30000);
+    </script>
+</body>
+</html>
