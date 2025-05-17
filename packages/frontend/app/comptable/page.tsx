@@ -2,21 +2,26 @@
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import GestionComptable from '@/components/comptabilite/GestionComptable';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ComptablePage() {
-  const { data: session, status } = useSession();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    // Vérification simplifiée de l'authentification basée sur localStorage
+    const auth = localStorage.getItem('isAuthenticated');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    } else {
       router.push('/auth/login');
     }
-  }, [status, router]);
+    setIsLoading(false);
+  }, [router]);
 
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full">
@@ -24,6 +29,10 @@ export default function ComptablePage() {
         </div>
       </DashboardLayout>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Ne rien rendre pendant la redirection
   }
 
   return (
