@@ -89,9 +89,13 @@ run_remote "cd $WEB_DIR/$PROJECT_NAME && npm run docker:up"
 
 # 9. Migrations de base de données
 echo "🗃️ Application des migrations Prisma..."
-run_remote "cd $WEB_DIR/$PROJECT_NAME && npx prisma migrate deploy --schema=packages/backend/prisma/schema.prisma"
+run_remote "cd $WEB_DIR/$PROJECT_NAME && cd packages/backend && npx prisma db push --schema=./prisma/schema.prisma"
 
-# 10. Vérification finale
+# 10. Exécution des seeds de données initiales
+echo "🌱 Initialisation des données de démonstration..."
+run_remote "cd $WEB_DIR/$PROJECT_NAME && cd packages/backend && npx ts-node prisma/seed.ts"
+
+# 11. Vérification finale
 echo "✅ Vérification du déploiement..."
 run_remote "docker ps --format 'table {{.Names}}\t{{.Status}}'"
 run_remote "sleep 10" # Attendre que les services démarrent
