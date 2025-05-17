@@ -1,134 +1,153 @@
-# Suivi du développement avec Claude
+# Structure du Projet DTAHC
 
-Ce fichier sert à suivre l'état d'avancement du projet DTAHC entre les sessions de développement avec Claude.
+## Contexte Technique
 
-## Dernière mise à jour: 17/05/2025
+Le projet DTAHC est une application full-stack utilisant une architecture monorepo. Elle comporte une particularité importante: **deux implémentations du frontend coexistent**.
 
-## État global du projet
+> **IMPORTANT**: Nous avons standardisé sur Next.js comme technologie frontend officielle. La version React (CRA) est maintenue uniquement pour la compatibilité avec l'existant, mais tout nouveau développement doit se faire en Next.js avec TailwindCSS.
 
-- [x] Structure du projet mise en place
-- [x] Configuration de base (TypeScript, ESLint, Prettier)
-- [x] Schéma de base de données Prisma
-- [x] Module d'authentification backend
-- [x] Module de gestion des utilisateurs backend
-- [x] Composants d'interface de base frontend
-- [x] Configuration Docker
-- [x] Configuration des environnements (local et distant)
-- [x] Scripts d'initialisation et de vérification
-- [x] Configuration Git et versionning
-- [ ] Module de gestion des clients
-- [ ] Module de workflow
-- [ ] Module de documents
-- [ ] Module de comptabilité
-- [ ] Intégration API Cadastre
-- [ ] Intégration API Urbanisme
-- [ ] Tests unitaires et d'intégration
-- [ ] Documentation API
+> **IMPORTANT**: La version React (CRA) dans le conteneur Docker est différente de celle dans le répertoire local! Les modifications faites en local ne sont pas automatiquement reflétées dans le conteneur.
 
-## Modules
+## Frontend
 
-### Backend
+### 1. Version React (Create React App)
+- **Localisation**: 
+  - **Locale**: `/src` (mais pas utilisée par Docker)
+  - **Docker**: `/app/src` (les fichiers à l'intérieur du conteneur)
+- **Technologies**: React, React Router, TailwindCSS (pas Chakra UI)
+- **Utilisée par**: L'environnement Docker actuel
+- **Fichiers clés dans le conteneur**:
+  - `/app/src/App.js` - Configuration des routes
+  - `/app/src/components/layout/Layout.js` - Structure principale de l'UI qui inclut le Sidebar
+  - `/app/src/pages/ComptablePage.jsx` - Module comptable
 
-| Module | État | Priorité | Description |
-|--------|------|----------|-------------|
-| Auth | ✅ Terminé | Haute | Authentification JWT avec refresh token |
-| Users | ✅ Terminé | Haute | Gestion des utilisateurs avec rôles |
-| Clients | 🔄 À faire | Haute | Gestion des clients et de leurs informations |
-| Workflow | 🔄 À faire | Haute | Machine à états pour le suivi des dossiers |
-| Documents | 🔄 À faire | Moyenne | Gestion documentaire et intégration MinIO |
-| Cadastre | 🔄 À faire | Moyenne | Intégration API Cadastre IGN |
-| Urbanisme | 🔄 À faire | Moyenne | Intégration API Géoportail Urbanisme |
-| Accounting | 🔄 À faire | Basse | Gestion comptable et facturation |
+> **Note importante**: Le composant Layout.js dans le conteneur Docker inclut directement le Sidebar (pas de composant Sidebar séparé). Pour ajouter un lien dans la barre latérale, il faut modifier directement le fichier Layout.js dans le conteneur.
 
-### Frontend
+### 2. Version Next.js
+- **Localisation**: `/packages/frontend`
+- **Technologies**: Next.js, App Router, TailwindCSS, React Query, Zustand
+- **Utilisée par**: Développement local et futur déploiement
+- **Fichiers clés**:
+  - `/packages/frontend/app/comptable/page.tsx` - Module comptable
+  - `/packages/frontend/components/layout/Sidebar.tsx` - Barre de navigation
 
-| Module | État | Priorité | Description |
-|--------|------|----------|-------------|
-| Auth | ✅ Terminé | Haute | Pages de connexion et déconnexion |
-| Dashboard | ✅ Terminé | Haute | Tableau de bord principal |
-| Layout | ✅ Terminé | Haute | Structure commune de l'application |
-| Clients | 🔄 À faire | Haute | Gestion des clients et formulaire |
-| Dossiers | 🔄 À faire | Haute | Suivi et gestion des dossiers |
-| Documents | 🔄 À faire | Moyenne | Upload et visualisation documents |
-| Comptabilité | 🔄 À faire | Basse | Interface de facturation |
+## Backend (NestJS)
 
-## Prochaines tâches
+- **Localisation**: `/packages/backend`
+- **Technologies**: NestJS, Prisma ORM, PostgreSQL, JWT
+- **Structure modulaire**:
+  - `auth` - Authentification et sécurité
+  - `users` - Gestion des utilisateurs
+  - `clients` - Gestion des clients
+  - `accounting` - Module comptable
+  - `workflow` - Gestion des dossiers d'urbanisme
+  - `documents` - Gestion documentaire
 
-### Priorité Haute
-1. Implémenter le module de gestion des clients backend
-2. Créer le formulaire de création/édition client frontend
-3. Implémenter le système de lien sécurisé pour formulaire auto-remplissable
-4. Développer le module de workflow backend
+## Modules Principaux
 
-### Priorité Moyenne
-1. Intégrer MinIO pour le stockage de documents
-2. Implémenter les services d'intégration Cadastre
-3. Créer les interfaces de visualisation des documents
+### Module Comptable
+- **Backend**: `/packages/backend/src/modules/accounting`
+- **Frontend React**: `/src/pages/ComptablePage.jsx`
+- **Frontend Next.js**: `/packages/frontend/app/comptable/page.tsx`
+- **Sidebar React**: Lien `/comptable` dans `/src/components/layout/Sidebar.jsx`
+- **Sidebar Next.js**: Lien `/comptable` dans `/packages/frontend/components/layout/Sidebar.tsx`
 
-### Priorité Basse
-1. Développer le module de comptabilité
-2. Ajouter des fonctionnalités de rapports et statistiques
+### Module Clients
+- **Backend**: `/packages/backend/src/modules/clients`
+- **Frontend React**: `/src/pages/ClientsPage.jsx`, `/src/components/client/*`
+- **Frontend Next.js**: `/packages/frontend/app/clients/*`
 
-## Problèmes connus
+## Docker et Déploiement
 
-| ID | Problème | Statut | Date | Solution |
-|----|----------|--------|------|----------|
-| - | - | - | - | - |
+### Configuration Docker
+- L'environnement Docker utilise actuellement la version React (CRA)
+- La configuration se trouve dans `/docker`
 
-## Scripts disponibles
+### Déploiement
+- Script de déploiement: `/scripts/deploy-server.sh`
+- Migrations et seeds de base de données: `/packages/backend/prisma/seed.ts`
 
-### Configuration et vérification
-- `npm run check:env` - Vérifie l'environnement de développement
-- `npm run migrate:data` - Migre les données de référence pour le développement
-- `./scripts/setup.sh` - Script d'initialisation complète du projet
-- `./scripts/check-server.sh` - Vérifie la configuration du serveur distant
+## Workflows de Développement
 
-### Développement
-- `npm run dev` - Démarre l'application en mode développement
-- `npm run build` - Construit l'application pour la production
-- `npm run lint` - Exécute le linter sur le code
-- `npm run typecheck` - Vérifie les types TypeScript
-- `npm run format` - Formate le code avec Prettier
-
-### Base de données
-- `npm run db:generate` - Génère les clients Prisma
-- `npm run db:push` - Applique les changements au schéma de la base de données
-- `npm run db:seed` - Peuple la base de données avec des données de test
-
-### Docker
-- `npm run docker:up` - Démarre les conteneurs Docker
-- `npm run docker:down` - Arrête les conteneurs Docker
-
-## Structure Git
-
-- Branche principale : `main`
-- Branches de fonctionnalités : `feature/xxx`
-- Branches de correction : `bugfix/xxx`
-
-## Commandes utiles
-
+### 1. Développement avec Docker
 ```bash
-# Premier démarrage
-./scripts/setup.sh
+docker-compose up
+```
+Cette commande démarre la version React du frontend dans le conteneur.
 
-# Développement quotidien
+### 2. Développement local (Next.js)
+```bash
+cd packages/frontend
 npm run dev
+```
+Cette commande démarre la version Next.js du frontend.
 
-# Avant de committer
-npm run lint
-npm run typecheck
+### 3. Modification de fichiers dans le conteneur Docker
 
-# Déploiement sur le serveur
-git pull
-npm run build
-npm run docker:up
+Lorsque vous devez modifier des fichiers dans le conteneur Docker, suivez ces étapes:
+
+1. Créez d'abord le fichier localement pour le versionner
+2. Copiez ensuite le fichier dans le conteneur:
+```bash
+docker cp /chemin/local/du/fichier.js dtahc-frontend:/app/chemin/destination/du/fichier.js
 ```
 
-## Références
+3. Redémarrez le conteneur pour que les modifications prennent effet:
+```bash
+docker restart dtahc-frontend
+```
 
-- Les fichiers de référence UI se trouvent dans `/Users/d972/dtahc-project/element-david`
-- Documentation API Cadastre IGN: https://apicarto.ign.fr/api/doc/
-- Documentation Géoportail Urbanisme: https://www.geoportail-urbanisme.gouv.fr/
-- Documentation Prisma: https://www.prisma.io/docs/
-- Documentation NestJS: https://docs.nestjs.com/
-- Documentation Next.js: https://nextjs.org/docs
+### 4. Vérification des fichiers dans le conteneur
+Pour vérifier la structure ou le contenu des fichiers dans le conteneur:
+
+```bash
+# Liste des fichiers
+docker exec dtahc-frontend ls -la /app/chemin/du/dossier
+
+# Afficher le contenu d'un fichier
+docker exec dtahc-frontend cat /app/chemin/du/fichier.js
+```
+
+## Notes Importantes
+
+1. Lors de l'ajout de nouvelles fonctionnalités, développez-les en priorité avec Next.js, puis adaptez-les pour React uniquement si nécessaire pour l'environnement Docker actuel.
+2. La structure du sidebar est différente entre les deux implémentations:
+   - React: Utilise Chakra UI et React Router
+   - Next.js: Utilise TailwindCSS et App Router
+3. La navigation vers le module comptable est accessible via `/comptable` dans les deux implémentations.
+
+## Bonnes Pratiques de Développement
+
+### 1. Standards de Codage
+- Utilisez TypeScript pour tout nouveau code
+- Suivez les conventions de nommage camelCase pour les variables et fonctions
+- Utilisez les interfaces pour définir les types complexes
+- Commentez le code uniquement quand nécessaire pour expliquer la logique complexe
+
+### 2. Développement Frontend
+- Utilisez les hooks React pour la gestion d'état (useState, useEffect)
+- Préférez les composants fonctionnels aux composants de classe
+- Utilisez React Query pour les appels API et la gestion du cache
+- Structurez les composants pour maximiser la réutilisation
+- Suivez la méthodologie Mobile First pour les styles
+
+### 3. Développement Backend
+- Structurez le code selon l'architecture NestJS (modules, controllers, services)
+- Utilisez les décorateurs pour les métadonnées (routes, validation)
+- Intégrez Prisma pour toutes les opérations de base de données
+- Validez les données d'entrée avec les DTOs et class-validator
+- Utilisez les gardes pour la sécurité et l'authentification
+
+### 4. Workflow Git
+- Faites des commits atomiques (une seule fonctionnalité par commit)
+- Suivez le format de message `type(scope): description` (ex: `feat(comptable): ajouter filtres`)
+- Créez des branches pour chaque fonctionnalité (`feature/xxx`)
+- Faites des pull requests pour les revues de code
+- Maintenez un historique git propre avec rebase si nécessaire
+
+### 5. Sécurité
+- N'exposez jamais les secrets dans le code ou les logs
+- Validez toutes les entrées utilisateur côté serveur
+- Utilisez les gardes CSRF et CORS pour la protection
+- Implémentez des limites de taux pour les API
+- Chiffrez les données sensibles en transit et au repos

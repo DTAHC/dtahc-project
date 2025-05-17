@@ -33,8 +33,17 @@ COPY --from=builder /app/packages/frontend/public ./packages/frontend/public
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
 # Installation des dépendances de production uniquement
-RUN npm install --production
+ENV HUSKY_SKIP_INSTALL=1
+RUN npm install --production --ignore-scripts
+
+# Environnement pour Next.js
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+WORKDIR /app/packages/frontend
 
 EXPOSE 3000
 
-CMD ["npm", "start", "--workspace=frontend"]
+# Démarrage de l'application Next.js
+CMD ["npm", "start"]

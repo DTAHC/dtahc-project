@@ -15,8 +15,8 @@ export default function GestionComptable() {
     { id: 'DEV-2023-005', client: 'Dubois Pierre', montant: 1600.00, date: '2023-11-15', statut: 'CANCELLED', type: 'DEVIS' },
   ];
 
-  const getStatusBadge = (status) => {
-    const statusClasses = {
+  const getStatusBadge = (status: string) => {
+    const statusClasses: {[key: string]: string} = {
       'PAID': 'bg-green-100 text-green-800',
       'PENDING': 'bg-blue-100 text-blue-800',
       'PARTIAL': 'bg-yellow-100 text-yellow-800',
@@ -24,7 +24,7 @@ export default function GestionComptable() {
       'OVERDUE': 'bg-orange-100 text-orange-800',
     };
     
-    const statusText = {
+    const statusText: {[key: string]: string} = {
       'PAID': 'Payée',
       'PENDING': 'En attente',
       'PARTIAL': 'Partiel',
@@ -42,14 +42,14 @@ export default function GestionComptable() {
     );
   };
 
-  const getTypeBadge = (type) => {
-    const typeClasses = {
+  const getTypeBadge = (type: string) => {
+    const typeClasses: {[key: string]: string} = {
       'FACTURE': 'bg-indigo-100 text-indigo-800',
       'DEVIS': 'bg-purple-100 text-purple-800',
       'ACOMPTE': 'bg-pink-100 text-pink-800',
     };
     
-    const typeText = {
+    const typeText: {[key: string]: string} = {
       'FACTURE': 'Facture',
       'DEVIS': 'Devis',
       'ACOMPTE': 'Acompte',
