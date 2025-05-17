@@ -1,0 +1,43 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copie des fichiers de dépendances
+COPY package*.json ./
+COPY packages/backend/package*.json ./packages/backend/
+COPY packages/shared/package*.json ./packages/shared/
+
+# Installation des dépendances
+RUN npm install
+
+# Copie du code source
+COPY packages/backend ./packages/backend
+COPY packages/shared ./packages/shared
+
+# Génération des prisma clients
+RUN cd packages/backend && npx prisma generate
+
+# Build des packages
+RUN npm run build --workspace=shared
+RUN npm run build --workspace=backend
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie des fichiers nécessaires à partir de l'étape de build
+COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/backend/prisma ./packages/backend/prisma
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/backend/node_modules ./packages/backend/node_modules
+
+# Mise en place du healthcheck
+RUN echo '#!/bin/sh\ncurl -f http://localhost:3001/api/health || exit 1' > /healthcheck.sh \
+    && chmod +x /healthcheck.sh
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 CMD [ "/healthcheck.sh" ]
+
+EXPOSE 3001
+
+CMD ["node", "packages/backend/dist/main.js"]

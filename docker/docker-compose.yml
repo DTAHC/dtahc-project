@@ -1,4 +1,4 @@
-version: '3.8'
+# La version est obsolète, mais on la conserve pour la compatibilité avec les anciens clients Docker Compose
 
 services:
   # Base de données PostgreSQL
@@ -60,12 +60,10 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-      - minio
-      - createbuckets
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dtahc_db
-      JWT_SECRET: your-secret-key-change-in-production
+      JWT_SECRET: dtahc-development-secret-key-2025-05-17
       JWT_EXPIRATION: 1d
       JWT_REFRESH_EXPIRATION: 7d
       MINIO_ENDPOINT: minio
