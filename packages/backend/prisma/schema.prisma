@@ -1,0 +1,409 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Utilisateurs et authentification
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  firstName         String
+  lastName          String
+  password          String
+  role              Role               @default(USER)
+  status            UserStatus         @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  lastLoginAt       DateTime?
+  refreshToken      String?
+  clients           Client[]
+  dossiers          Dossier[]          @relation("DossierCreator")
+  assignedDossiers  Dossier[]          @relation("DossierAssignee")
+  tasks             Task[]             @relation("TaskCreator")
+  assignedTasks     Task[]             @relation("TaskAssignee")
+  notifications     Notification[]
+  comments          Comment[]
+  documentUploads   Document[]
+  accountingRecords AccountingRecord[]
+}
+
+enum Role {
+  ADMIN
+  COMPTABLE
+  GESTION
+  PRODUCTION
+  CLIENT_PRO
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+// Gestion des clients
+model Client {
+  id               String           @id @default(uuid())
+  reference        String           @unique // Format: CL-YYYY-XXX
+  clientType       ClientType       @default(PARTICULIER)
+  proReferenceId   String?          // Pour les clients des pros, référence au pro
+  proReference     Client?          @relation("ProClients", fields: [proReferenceId], references: [id])
+  clients          Client[]         @relation("ProClients")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  createdById      String
+  createdBy        User             @relation(fields: [createdById], references: [id])
+  contactInfo      ContactInfo?
+  addresses        Address[]
+  dossiers         Dossier[]
+  documents        Document[]
+  accountingRecords AccountingRecord[]
+  formLinks        FormLink[]
+}
+
+enum ClientType {
+  PARTICULIER
+  ARCADIA
+  COMBLE_DF
+  MDT_ANTONY
+  ECA
+  LT_ARTISAN
+  SODERBAT
+  COMBLESPACE
+  MDT_C_ROBERT
+  MDT_YERRES
+  MDT_ST_GEN
+  B3C
+  TERRASSE_ET_JAR
+  RENOKEA
+  GROUPE_APB
+  PUREWATT
+  S_AUGUSTO
+  TRAVAUX_3D
+  BATI_PRESTO
+  CPHF
+  MDT_FONT
+}
+
+model ContactInfo {
+  id          String    @id @default(uuid())
+  clientId    String    @unique
+  client      Client    @relation(fields: [clientId], references: [id])
+  firstName   String
+  lastName    String
+  email       String
+  phone       String
+  mobilePhone String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  type        AddressType
+  street      String
+  complement  String?
+  postalCode  String
+  city        String
+  isProjectAddress  Boolean @default(false)
+  cadastralReference String?
+  coordinates Json?    // {latitude: x, longitude: y}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum AddressType {
+  FACTURATION
+  POSTAL
+  PROJECT
+}
+
+// Gestion des dossiers et du workflow
+model Dossier {
+  id               String           @id @default(uuid())
+  reference        String           @unique // Format: DOS-YYYY-XXX
+  title            String
+  description      String?
+  clientId         String
+  client           Client           @relation(fields: [clientId], references: [id])
+  type             DossierType
+  workflowState    WorkflowState    @default(INITIAL)
+  status           DossierStatus    @default(NOUVEAU)
+  priority         Priority         @default(NORMAL)
+  surfaceExistant  Float?
+  surfaceProjet    Float?
+  createdById      String
+  createdBy        User             @relation("DossierCreator", fields: [createdById], references: [id])
+  assignedToId     String?
+  assignedTo       User?            @relation("DossierAssignee", fields: [assignedToId], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deadline         DateTime?
+  startDate        DateTime?
+  submissionDate   DateTime?
+  completionDate   DateTime?
+  characteristics  Json?            // {changementDestination: bool, erp: bool, demolition: bool, travauxRealises: bool}
+  workNature       Json?            // {constructionNeuve: bool, extension: bool, ...}
+  documents        Document[]
+  tasks            Task[]
+  comments         Comment[]
+  accountingRecords AccountingRecord[]
+  stateHistory     StateHistory[]
+}
+
+enum DossierType {
+  DP
+  DP_MUR
+  DP_ITE
+  DP_FENETRE
+  DP_PISCINE
+  DP_SOLAIRE
+  PC_RT
+  PC_RT_SIGNATURE
+  PC_MODIF
+  ERP
+  FENETRE_ITE
+  PLAN_DE_MASSE
+  PAC
+  REALISATION_3D
+}
+
+enum WorkflowState {
+  INITIAL
+  ATTENTE_PIECE
+  ETUDE_APS
+  DOSSIER_COMPLET
+  RE_2020
+  SIGNATURE_ARCHI
+}
+
+enum DossierStatus {
+  NOUVEAU
+  LIVRE_CLIENT
+  DEPOT_EN_LIGNE
+  TOP_URGENT
+  ANNULE
+  INCOMPLETUDE_MAIRIE
+  REFUS
+  A_DEPOSER_EN_LIGNE
+  A_ENVOYER_AU_CLIENT
+  EN_INSTRUCTION
+  ACCEPTE
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model StateHistory {
+  id          String        @id @default(uuid())
+  dossierId   String
+  dossier     Dossier       @relation(fields: [dossierId], references: [id])
+  fromState   WorkflowState
+  toState     WorkflowState
+  fromStatus  DossierStatus
+  toStatus    DossierStatus
+  comment     String?
+  createdById String
+  timestamp   DateTime      @default(now())
+}
+
+// Gestion des tâches
+model Task {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  dossierId    String
+  dossier      Dossier    @relation(fields: [dossierId], references: [id])
+  status       TaskStatus @default(TODO)
+  priority     Priority   @default(NORMAL)
+  createdById  String
+  createdBy    User       @relation("TaskCreator", fields: [createdById], references: [id])
+  assignedToId String?
+  assignedTo   User?      @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  dueDate      DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  completedAt  DateTime?
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+// Gestion documentaire
+model Document {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  type          DocumentType
+  path          String        // Chemin dans MinIO
+  size          Int
+  mimeType      String
+  isRequired    Boolean       @default(false)
+  isConfidential Boolean      @default(false)
+  status        DocumentStatus @default(PENDING)
+  clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id])
+  dossierId     String?
+  dossier       Dossier?      @relation(fields: [dossierId], references: [id])
+  uploadedById  String
+  uploadedBy    User          @relation(fields: [uploadedById], references: [id])
+  uploadedAt    DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  version       Int           @default(1)
+  parentId      String?       // Pour les versions du même document
+  metadata      Json?         // Métadonnées spécifiques au type de document
+}
+
+enum DocumentType {
+  PHOTO_PRES
+  PHOTO_LOIN
+  PLAN
+  CERFA
+  NOTICE
+  CADASTRE
+  PLU
+  ETUDE_THERMIQUE
+  FACTURE
+  DEVIS
+  CONTRAT
+  AUTRE
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Communication et notifications
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+  dossierId   String
+  dossier     Dossier   @relation(fields: [dossierId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isInternal  Boolean   @default(false)
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id])
+  type       NotificationType
+  title      String
+  message    String
+  read       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  link       String?          // Lien vers la ressource concernée
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+// Comptabilité
+model AccountingRecord {
+  id           String         @id @default(uuid())
+  type         AccountingType
+  status       PaymentStatus  @default(PENDING)
+  reference    String?        // Numéro de facture ou devis
+  amount       Float
+  taxRate      Float          @default(20)
+  dueDate      DateTime?
+  clientId     String
+  client       Client         @relation(fields: [clientId], references: [id])
+  dossierId    String?
+  dossier      Dossier?       @relation(fields: [dossierId], references: [id])
+  createdById  String
+  createdBy    User           @relation(fields: [createdById], references: [id])
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  paidAt       DateTime?
+  paidAmount   Float?
+  paymentMethod PaymentMethod?
+  description  String?
+  items        AccountingItem[]
+  payments     Payment[]
+}
+
+enum AccountingType {
+  DEVIS
+  FACTURE
+  ACOMPTE
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  CANCELLED
+  OVERDUE
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CREDIT_CARD
+  CHECK
+  CASH
+  OTHER
+}
+
+model AccountingItem {
+  id                String           @id @default(uuid())
+  accountingRecordId String
+  accountingRecord  AccountingRecord @relation(fields: [accountingRecordId], references: [id])
+  description       String
+  quantity          Float
+  unitPrice         Float
+  taxRate           Float            @default(20)
+  discount          Float?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  accountingRecordId String
+  accountingRecord  AccountingRecord @relation(fields: [accountingRecordId], references: [id])
+  amount            Float
+  paymentMethod     PaymentMethod
+  paymentDate       DateTime
+  reference         String?         // Référence du paiement
+  notes             String?
+  createdAt         DateTime        @default(now())
+}
+
+// Gestion des formulaires
+model FormLink {
+  id          String    @id @default(uuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  token       String    @unique
+  expiresAt   DateTime
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+}

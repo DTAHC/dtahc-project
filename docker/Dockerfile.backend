@@ -1,0 +1,46 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copie des fichiers de dépendances
+COPY package*.json ./
+COPY packages/backend/package*.json ./packages/backend/
+COPY packages/shared/package*.json ./packages/shared/
+
+# Installation des dépendances
+RUN npm install
+
+# Copie du code source
+COPY packages/backend ./packages/backend
+COPY packages/shared ./packages/shared
+
+# Génération des prisma clients
+RUN npm run db:generate --workspace=backend
+
+# Build des packages
+RUN npm run build --workspace=shared
+RUN npm run build --workspace=backend
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie des fichiers nécessaires à partir de l'étape de build
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/packages/backend/package*.json ./packages/backend/
+COPY --from=builder /app/packages/shared/package*.json ./packages/shared/
+
+# Copie des builds
+COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+
+# Copie des fichiers Prisma
+COPY --from=builder /app/packages/backend/prisma ./packages/backend/prisma
+COPY --from=builder /app/packages/backend/node_modules/.prisma ./packages/backend/node_modules/.prisma
+
+# Installation des dépendances de production uniquement
+RUN npm install --production
+
+EXPOSE 3001
+
+CMD ["node", "packages/backend/dist/main.js"]
