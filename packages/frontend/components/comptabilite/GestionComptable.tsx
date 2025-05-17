@@ -1,15 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  FilePlus, FileText, FileCheck, FileX, Wallet, 
-  Calendar, Euro, Search, Clock, AlertTriangle 
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function GestionComptable() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,37 +15,52 @@ export default function GestionComptable() {
     { id: 'DEV-2023-005', client: 'Dubois Pierre', montant: 1600.00, date: '2023-11-15', statut: 'CANCELLED', type: 'DEVIS' },
   ];
 
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string, icon: React.ReactNode, text: string }> = {
-      'PAID': { color: 'bg-green-100 text-green-800', icon: <FileCheck size={16} />, text: 'Payée' },
-      'PENDING': { color: 'bg-blue-100 text-blue-800', icon: <Clock size={16} />, text: 'En attente' },
-      'PARTIAL': { color: 'bg-yellow-100 text-yellow-800', icon: <Wallet size={16} />, text: 'Partiel' },
-      'CANCELLED': { color: 'bg-red-100 text-red-800', icon: <FileX size={16} />, text: 'Annulée' },
-      'OVERDUE': { color: 'bg-orange-100 text-orange-800', icon: <AlertTriangle size={16} />, text: 'En retard' },
+  const getStatusBadge = (status) => {
+    const statusClasses = {
+      'PAID': 'bg-green-100 text-green-800',
+      'PENDING': 'bg-blue-100 text-blue-800',
+      'PARTIAL': 'bg-yellow-100 text-yellow-800',
+      'CANCELLED': 'bg-red-100 text-red-800',
+      'OVERDUE': 'bg-orange-100 text-orange-800',
     };
     
-    const statusInfo = statusMap[status] || { color: 'bg-gray-100 text-gray-800', icon: <FileText size={16} />, text: status };
+    const statusText = {
+      'PAID': 'Payée',
+      'PENDING': 'En attente',
+      'PARTIAL': 'Partiel',
+      'CANCELLED': 'Annulée',
+      'OVERDUE': 'En retard',
+    };
+    
+    const classes = statusClasses[status] || 'bg-gray-100 text-gray-800';
+    const text = statusText[status] || status;
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
-        {statusInfo.icon}
-        <span className="ml-1">{statusInfo.text}</span>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${classes}`}>
+        {text}
       </span>
     );
   };
 
-  const getTypeBadge = (type: string) => {
-    const typeMap: Record<string, { color: string, text: string }> = {
-      'FACTURE': { color: 'bg-indigo-100 text-indigo-800', text: 'Facture' },
-      'DEVIS': { color: 'bg-purple-100 text-purple-800', text: 'Devis' },
-      'ACOMPTE': { color: 'bg-pink-100 text-pink-800', text: 'Acompte' },
+  const getTypeBadge = (type) => {
+    const typeClasses = {
+      'FACTURE': 'bg-indigo-100 text-indigo-800',
+      'DEVIS': 'bg-purple-100 text-purple-800',
+      'ACOMPTE': 'bg-pink-100 text-pink-800',
     };
     
-    const typeInfo = typeMap[type] || { color: 'bg-gray-100 text-gray-800', text: type };
+    const typeText = {
+      'FACTURE': 'Facture',
+      'DEVIS': 'Devis',
+      'ACOMPTE': 'Acompte',
+    };
+    
+    const classes = typeClasses[type] || 'bg-gray-100 text-gray-800';
+    const text = typeText[type] || type;
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
-        {typeInfo.text}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${classes}`}>
+        {text}
       </span>
     );
   };
@@ -70,147 +76,110 @@ export default function GestionComptable() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex gap-2">
-          <Button variant="default">
-            <FilePlus size={16} className="mr-2" />
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+            <span className="mr-2">+</span>
             Nouvelle Facture
-          </Button>
-          <Button variant="outline">
-            <FilePlus size={16} className="mr-2" />
+          </button>
+          <button className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium flex items-center">
+            <span className="mr-2">+</span>
             Nouveau Devis
-          </Button>
+          </button>
         </div>
         
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
+            <input
               type="search"
               placeholder="Rechercher..."
-              className="pl-8 w-full"
+              className="pl-8 w-full h-10 px-3 py-2 border border-gray-300 rounded-md"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-          <Select 
+          <select 
+            className="w-[180px] h-10 pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md"
             value={filterStatus} 
-            onValueChange={setFilterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrer par statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="PAID">Payées</SelectItem>
-              <SelectItem value="PENDING">En attente</SelectItem>
-              <SelectItem value="PARTIAL">Paiement partiel</SelectItem>
-              <SelectItem value="OVERDUE">En retard</SelectItem>
-              <SelectItem value="CANCELLED">Annulées</SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="all">Tous les statuts</option>
+            <option value="PAID">Payées</option>
+            <option value="PENDING">En attente</option>
+            <option value="PARTIAL">Paiement partiel</option>
+            <option value="OVERDUE">En retard</option>
+            <option value="CANCELLED">Annulées</option>
+          </select>
         </div>
       </div>
 
-      <Tabs defaultValue="documents" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="documents">Documents comptables</TabsTrigger>
-          <TabsTrigger value="paiements">Paiements</TabsTrigger>
-          <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="documents" className="mt-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Documents comptables</CardTitle>
-              <CardDescription>
-                Gérez vos factures, devis et acomptes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-700">
-                  <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3">Référence</th>
-                      <th scope="col" className="px-6 py-3">Type</th>
-                      <th scope="col" className="px-6 py-3">Client</th>
-                      <th scope="col" className="px-6 py-3">Date</th>
-                      <th scope="col" className="px-6 py-3">Montant</th>
-                      <th scope="col" className="px-6 py-3">Statut</th>
-                      <th scope="col" className="px-6 py-3">Actions</th>
+      <div className="bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <div className="flex">
+            <button className="px-4 py-3 border-b-2 border-blue-500 text-blue-600 font-medium">
+              Documents comptables
+            </button>
+            <button className="px-4 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-700 hover:border-gray-300 font-medium">
+              Paiements
+            </button>
+            <button className="px-4 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-700 hover:border-gray-300 font-medium">
+              Statistiques
+            </button>
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-gray-700">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3">Référence</th>
+                  <th scope="col" className="px-6 py-3">Type</th>
+                  <th scope="col" className="px-6 py-3">Client</th>
+                  <th scope="col" className="px-6 py-3">Date</th>
+                  <th scope="col" className="px-6 py-3">Montant</th>
+                  <th scope="col" className="px-6 py-3">Statut</th>
+                  <th scope="col" className="px-6 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((doc) => (
+                    <tr key={doc.id} className="bg-white border-b hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-gray-900">{doc.id}</td>
+                      <td className="px-6 py-4">{getTypeBadge(doc.type)}</td>
+                      <td className="px-6 py-4">{doc.client}</td>
+                      <td className="px-6 py-4">{new Date(doc.date).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">{doc.montant.toFixed(2)} €</td>
+                      <td className="px-6 py-4">{getStatusBadge(doc.statut)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button className="text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </button>
+                          <button className="text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDocuments.length > 0 ? (
-                      filteredDocuments.map((doc) => (
-                        <tr key={doc.id} className="bg-white border-b hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium text-gray-900">{doc.id}</td>
-                          <td className="px-6 py-4">{getTypeBadge(doc.type)}</td>
-                          <td className="px-6 py-4">{doc.client}</td>
-                          <td className="px-6 py-4">{new Date(doc.date).toLocaleDateString()}</td>
-                          <td className="px-6 py-4">{doc.montant.toFixed(2)} €</td>
-                          <td className="px-6 py-4">{getStatusBadge(doc.statut)}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="icon">
-                                <FileText size={16} />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Euro size={16} />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr className="bg-white border-b">
-                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                          Aucun document correspondant aux critères
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="paiements" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique des paiements</CardTitle>
-              <CardDescription>
-                Suivi des paiements reçus et à percevoir
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-40">
-                <p className="text-gray-500">
-                  Module de paiements en développement
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="statistiques" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistiques financières</CardTitle>
-              <CardDescription>
-                Analyse de vos revenus et trésorerie
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-40">
-                <p className="text-gray-500">
-                  Module de statistiques en développement
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  ))
+                ) : (
+                  <tr className="bg-white border-b">
+                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                      Aucun document correspondant aux critères
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
