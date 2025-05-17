@@ -12,7 +12,7 @@ WEB_DIR="/var/www"
 PROJECT_NAME="dtahc-project"
 BACKUP_DIR="/var/backups/dtahc"
 GIT_REPO="git@github.com:DTAHC/dtahc-project.git"
-GIT_BRANCH="main"
+GIT_BRANCH="develop"
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
 
 # Fonction pour exécuter des commandes sur le serveur distant
@@ -50,7 +50,7 @@ run_remote "cat > $WEB_DIR/$PROJECT_NAME/packages/backend/.env << 'EOL'
 NODE_ENV=production
 
 # Database
-DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/dtahc_db\"
+DATABASE_URL=\"postgresql://postgres:postgres@postgres:5432/dtahc_db\"
 
 # JWT
 JWT_SECRET=\"dtahc-production-secret-key-$(openssl rand -hex 12)\"
@@ -58,7 +58,7 @@ JWT_EXPIRATION=\"1d\"
 JWT_REFRESH_EXPIRATION=\"7d\"
 
 # MinIO Configuration for document storage
-MINIO_ENDPOINT=\"localhost\"
+MINIO_ENDPOINT=\"minio\"
 MINIO_PORT=9000
 MINIO_ACCESS_KEY=\"minioadmin\"
 MINIO_SECRET_KEY=\"minioadmin\"
@@ -71,21 +71,30 @@ API_PREFIX=\"/api\"
 ALLOWED_ORIGINS=\"https://dtahc.fr,http://localhost:3000\"
 EOL"
 
-# 5. Installation des dépendances
+# 5. Génération des types Prisma
+echo "🔄 Génération des types Prisma..."
+run_remote "cd $WEB_DIR/$PROJECT_NAME && npx prisma generate --schema=packages/backend/prisma/schema.prisma"
+
+# 6. Installation des dépendances
 echo "📥 Installation des dépendances..."
 run_remote "cd $WEB_DIR/$PROJECT_NAME && npm install"
 
-# 6. Construction du projet
+# 7. Construction du projet
 echo "🔨 Construction du projet..."
 run_remote "cd $WEB_DIR/$PROJECT_NAME && npm run build"
 
-# 7. Démarrage des conteneurs Docker
+# 8. Démarrage des conteneurs Docker
 echo "🐳 Démarrage des conteneurs Docker..."
 run_remote "cd $WEB_DIR/$PROJECT_NAME && npm run docker:up"
 
-# 8. Vérification finale
+# 9. Migrations de base de données
+echo "🗃️ Application des migrations Prisma..."
+run_remote "cd $WEB_DIR/$PROJECT_NAME && npx prisma migrate deploy --schema=packages/backend/prisma/schema.prisma"
+
+# 10. Vérification finale
 echo "✅ Vérification du déploiement..."
 run_remote "docker ps --format 'table {{.Names}}\t{{.Status}}'"
+run_remote "sleep 10" # Attendre que les services démarrent
 run_remote "curl -s http://localhost:3001/api/health || echo 'API non accessible'"
 run_remote "curl -s http://localhost:3000 -o /dev/null -w 'Frontend Status: %{http_code}\\n' || echo 'Frontend non accessible'"
 
