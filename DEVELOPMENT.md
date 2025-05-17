@@ -24,6 +24,8 @@ dtahc-project/
 │   ├── frontend/       # Application Next.js
 │   └── shared/         # Types et utilitaires partagés
 ├── docker/             # Configuration Docker
+├── docs/               # Documentation
+├── scripts/            # Scripts utilitaires
 └── ...
 ```
 
@@ -31,7 +33,7 @@ dtahc-project/
 
 1. Cloner le dépôt Git
 ```bash
-git clone <repository-url> dtahc-project
+git clone git@github.com:DTAHC/dtahc-project.git
 cd dtahc-project
 ```
 
@@ -69,7 +71,7 @@ L'environnement de production est configuré via Docker pour assurer la cohéren
 
 1. Cloner le dépôt sur le serveur
 ```bash
-git clone <repository-url> dtahc-project
+git clone git@github.com:DTAHC/dtahc-project.git
 cd dtahc-project
 ```
 
@@ -100,6 +102,15 @@ Nous utilisons la méthode Git Flow pour organiser notre développement :
 - `bugfix/*` : branches pour les corrections de bugs
 - `release/*` : branches pour la préparation des versions
 
+### Dépôt GitHub
+
+Le dépôt GitHub du projet se trouve à l'adresse : [https://github.com/DTAHC/dtahc-project](https://github.com/DTAHC/dtahc-project)
+
+Pour gérer le dépôt GitHub, plusieurs scripts sont disponibles :
+
+- `scripts/reset-github.sh` : Pour remplacer complètement l'ancien contenu par le nouveau (⚠️ Attention, perte d'historique !)
+- `scripts/merge-github.sh` : Pour intégrer l'ancien et le nouveau contenu (préserve l'historique)
+
 ### Conventions de commit
 
 Format : `type(scope): description concise`
@@ -112,6 +123,7 @@ Types :
 - `refactor` : refactorisation du code
 - `test` : ajout ou modification de tests
 - `chore` : tâches de maintenance
+- `ci` : changements dans la configuration CI/CD
 
 Exemple : `feat(clients): ajouter le formulaire de création de client`
 
@@ -140,6 +152,18 @@ git push origin feature/ma-nouvelle-fonctionnalite
 5. Créer une Pull Request vers `develop`
 
 6. Après revue et tests, fusionner dans `develop`
+
+## Documentation
+
+### GitHub Pages
+
+La documentation du projet est hébergée sur GitHub Pages et disponible à l'adresse [https://dtahc.github.io/dtahc-project/](https://dtahc.github.io/dtahc-project/)
+
+Pour ajouter ou modifier la documentation :
+
+1. Modifiez les fichiers dans le dossier `docs/`
+2. Committer et pousser vers GitHub
+3. GitHub Actions s'occupera automatiquement de la publication
 
 ## Suivi du développement
 
@@ -187,3 +211,11 @@ Ce script vérifie :
 - La disponibilité de la base de données
 - Les variables d'environnement requises
 - Les dépendances du projet
+
+## CI/CD avec GitHub Actions
+
+Le projet utilise GitHub Actions pour l'intégration continue et le déploiement continu. Les workflows sont définis dans le dossier `.github/workflows/` :
+
+- `ci.yml` : Exécute les tests et les vérifications de code
+- `deploy-docs.yml` : Déploie la documentation sur GitHub Pages
+- `pages.yml` : Configuration générale pour GitHub Pages
