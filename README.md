@@ -2,6 +2,9 @@
 
 Application web complète de gestion des dossiers d'autorisations de travaux, depuis l'acquisition client jusqu'au suivi des démarches administratives.
 
+[![CI](https://github.com/DTAHC/dtahc-project/actions/workflows/ci.yml/badge.svg)](https://github.com/DTAHC/dtahc-project/actions/workflows/ci.yml)
+[![Documentation](https://github.com/DTAHC/dtahc-project/actions/workflows/pages.yml/badge.svg)](https://dtahc.github.io/dtahc-project/)
+
 ## 🚀 Fonctionnalités
 
 - Gestion des clients et de leurs projets
@@ -55,30 +58,25 @@ dtahc-project/
 │   │   ├── components/
 │   │   └── lib/
 │   └── shared/          # Types et utilitaires partagés
-└── docker/              # Configuration Docker
+├── docker/              # Configuration Docker
+├── docs/                # Documentation
+└── scripts/             # Scripts utilitaires
 ```
 
 ## 🚀 Installation et démarrage
 
-### Prérequis
-- Node.js 18+
-- npm ou yarn
-- PostgreSQL (ou Docker pour l'exécution via conteneurs)
-
-### Installation des dépendances
+### Installation rapide
 
 ```bash
-# Installation des dépendances pour tous les packages
-npm install
+# Cloner le dépôt
+git clone git@github.com:DTAHC/dtahc-project.git
+cd dtahc-project
 
-# Générer les types Prisma
-npm run db:generate
+# Exécuter le script de configuration
+./scripts/setup.sh
 ```
 
-### Configuration
-
-1. Créez un fichier `.env` dans le dossier `packages/backend` en vous inspirant du fichier `.env.example`
-2. Configurez vos variables d'environnement (connexion à la base de données, clés JWT, etc.)
+Pour plus de détails, consultez le [Guide de démarrage](https://dtahc.github.io/dtahc-project/getting-started).
 
 ### Démarrage en mode développement
 
@@ -93,20 +91,17 @@ npm run dev --workspace=backend
 npm run dev --workspace=frontend
 ```
 
-### Construction pour la production
-
-```bash
-# Construire tous les packages
-npm run build
-
-# Démarrer en mode production
-npm start
-```
-
 ## 📚 Documentation
 
-- [Documentation backend API](packages/backend/README.md)
-- [Documentation frontend](packages/frontend/README.md)
+La documentation complète est disponible sur [https://dtahc.github.io/dtahc-project/](https://dtahc.github.io/dtahc-project/)
+
+## 🤝 Contribution
+
+1. Forker le projet
+2. Créer une branche de fonctionnalité (`git checkout -b feature/amazing-feature`)
+3. Commiter vos changements (`git commit -m 'feat: add some amazing feature'`)
+4. Pousser la branche (`git push origin feature/amazing-feature`)
+5. Ouvrir une Pull Request
 
 ## 🔐 Rôles et permissions
 
