@@ -1,0 +1,5 @@
+theme: jekyll-theme-cayman
+title: Documentation DTAHC
+description: Documentation technique pour le projet DTAHC de gestion des dossiers d'autorisations de travaux
+baseurl: "/dtahc-project"
+url: "https://dtahc.github.io"
