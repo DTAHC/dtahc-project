@@ -13,6 +13,9 @@ Ce fichier sert à suivre l'état d'avancement du projet DTAHC entre les session
 - [x] Module de gestion des utilisateurs backend
 - [x] Composants d'interface de base frontend
 - [x] Configuration Docker
+- [x] Configuration des environnements (local et distant)
+- [x] Scripts d'initialisation et de vérification
+- [x] Configuration Git et versionning
 - [ ] Module de gestion des clients
 - [ ] Module de workflow
 - [ ] Module de documents
@@ -72,26 +75,53 @@ Ce fichier sert à suivre l'état d'avancement du projet DTAHC entre les session
 |----|----------|--------|------|----------|
 | - | - | - | - | - |
 
+## Scripts disponibles
+
+### Configuration et vérification
+- `npm run check:env` - Vérifie l'environnement de développement
+- `npm run migrate:data` - Migre les données de référence pour le développement
+- `./scripts/setup.sh` - Script d'initialisation complète du projet
+- `./scripts/check-server.sh` - Vérifie la configuration du serveur distant
+
+### Développement
+- `npm run dev` - Démarre l'application en mode développement
+- `npm run build` - Construit l'application pour la production
+- `npm run lint` - Exécute le linter sur le code
+- `npm run typecheck` - Vérifie les types TypeScript
+- `npm run format` - Formate le code avec Prettier
+
+### Base de données
+- `npm run db:generate` - Génère les clients Prisma
+- `npm run db:push` - Applique les changements au schéma de la base de données
+- `npm run db:seed` - Peuple la base de données avec des données de test
+
+### Docker
+- `npm run docker:up` - Démarre les conteneurs Docker
+- `npm run docker:down` - Arrête les conteneurs Docker
+
+## Structure Git
+
+- Branche principale : `main`
+- Branches de fonctionnalités : `feature/xxx`
+- Branches de correction : `bugfix/xxx`
+
 ## Commandes utiles
 
 ```bash
-# Démarrer l'application en mode développement
+# Premier démarrage
+./scripts/setup.sh
+
+# Développement quotidien
 npm run dev
 
-# Linter
+# Avant de committer
 npm run lint
-
-# Vérification TypeScript
 npm run typecheck
 
-# Construire l'application
+# Déploiement sur le serveur
+git pull
 npm run build
-
-# Générer les types Prisma
-npm run db:generate
-
-# Appliquer les changements Prisma à la base de données
-npm run db:push
+npm run docker:up
 ```
 
 ## Références

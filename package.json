@@ -15,6 +15,7 @@
     "db:push": "cd packages/backend && npm run db:push",
     "db:seed": "cd packages/backend && npm run db:seed",
     "check:env": "node scripts/check-env.js",
+    "migrate:data": "node scripts/migrate-data.js",
     "prepare": "husky install",
     "docker:up": "cd docker && docker-compose up -d",
     "docker:down": "cd docker && docker-compose down",
