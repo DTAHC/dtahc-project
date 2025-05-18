@@ -1,0 +1,137 @@
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store';
+import { useSocket } from '../../hooks';
+import { LogOut, User, Briefcase, Home, Settings, FileText, DollarSign } from 'lucide-react';
+
+const Layout = ({ children }) => {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  useSocket(); // Initialiser le socket
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+  
+  return (
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-800 text-white">
+        <div className="p-4">
+          <h1 className="text-xl font-bold mb-4">DTAHC</h1>
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
+              <User size={20} />
+            </div>
+            <div className="ml-3">
+              <p className="font-semibold">{user?.username}</p>
+              <p className="text-xs text-gray-400">{user?.role}</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="px-2">
+          <Link
+            to="/dashboard"
+            className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+              isActive('/dashboard') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Home size={18} className="mr-3" />
+            Tableau de bord
+          </Link>
+          
+          <Link
+            to="/clients"
+            className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+              isActive('/clients') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <User size={18} className="mr-3" />
+            Clients
+          </Link>
+          
+          <Link
+            to="/dossiers"
+            className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+              isActive('/dossiers') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <Briefcase size={18} className="mr-3" />
+            Dossiers
+          </Link>
+          
+          <Link
+            to="/documents"
+            className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+              isActive('/documents') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <FileText size={18} className="mr-3" />
+            Documents
+          </Link>
+          
+          <Link
+            to="/comptable"
+            className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+              isActive('/comptable') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            <DollarSign size={18} className="mr-3" />
+            Gestion Comptable
+          </Link>
+          
+          {user?.role === 'admin' && (
+            <Link
+              to="/settings"
+              className={`mb-1 flex items-center px-4 py-2 rounded-md ${
+                isActive('/settings') ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              <Settings size={18} className="mr-3" />
+              Paramètres
+            </Link>
+          )}
+        </nav>
+        
+        <div className="absolute bottom-0 w-64 p-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-md"
+          >
+            <LogOut size={18} className="mr-3" />
+            Déconnexion
+          </button>
+        </div>
+      </div>
+      
+      {/* Content */}
+      <div className="flex-1 bg-gray-100">
+        <header className="bg-white shadow">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-semibold">
+              {location.pathname === '/dashboard' && 'Tableau de bord'}
+              {location.pathname === '/clients' && 'Gestion des clients'}
+              {location.pathname === '/dossiers' && 'Gestion des dossiers'}
+              {location.pathname === '/documents' && 'Gestion des documents'}
+              {location.pathname === '/comptable' && 'Gestion Comptable'}
+              {location.pathname === '/settings' && 'Paramètres'}
+            </h1>
+          </div>
+        </header>
+        
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

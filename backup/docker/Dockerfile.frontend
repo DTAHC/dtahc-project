@@ -1,0 +1,40 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copie des fichiers de dépendances
+COPY package*.json ./
+COPY packages/frontend/package*.json ./packages/frontend/
+COPY packages/shared/package*.json ./packages/shared/
+
+# Installation des dépendances
+RUN npm install
+
+# Copie du code source
+COPY packages/frontend ./packages/frontend
+COPY packages/shared ./packages/shared
+
+# Build des packages
+RUN npm run build --workspace=shared
+RUN npm run build --workspace=frontend
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copie des fichiers nécessaires à partir de l'étape de build
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/packages/frontend/package*.json ./packages/frontend/
+COPY --from=builder /app/packages/shared/package*.json ./packages/shared/
+
+# Copie des builds
+COPY --from=builder /app/packages/frontend/.next ./packages/frontend/.next
+COPY --from=builder /app/packages/frontend/public ./packages/frontend/public
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+
+# Installation des dépendances de production uniquement
+RUN npm install --production
+
+EXPOSE 3000
+
+CMD ["npm", "start", "--workspace=frontend"]

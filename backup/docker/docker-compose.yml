@@ -1,0 +1,121 @@
+# La version est obsolète, mais on la conserve pour la compatibilité avec les anciens clients Docker Compose
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:14-alpine
+    container_name: dtahc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dtahc_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - dtahc-network
+
+  # Stockage d'objets MinIO
+  minio:
+    image: minio/minio:latest
+    container_name: dtahc-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server --console-address ":9001" /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - dtahc-network
+
+  # Service de création du bucket MinIO au démarrage
+  createbuckets:
+    image: minio/mc
+    container_name: dtahc-createbuckets
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/dtahc-documents;
+      /usr/bin/mc policy set public myminio/dtahc-documents;
+      exit 0;
+      "
+    networks:
+      - dtahc-network
+
+  # Backend NestJS
+  backend:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.backend
+    container_name: dtahc-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dtahc_db
+      JWT_SECRET: dtahc-development-secret-key-2025-05-17
+      JWT_EXPIRATION: 1d
+      JWT_REFRESH_EXPIRATION: 7d
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET: dtahc-documents
+      API_PORT: 3001
+      API_PREFIX: /api
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "3001:3001"
+    networks:
+      - dtahc-network
+
+  # Frontend React avec Create React App en mode développement
+  frontend:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.frontend
+    container_name: dtahc-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    networks:
+      - dtahc-network
+
+  # Nginx comme reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: dtahc-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - dtahc-network
+
+networks:
+  dtahc-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
