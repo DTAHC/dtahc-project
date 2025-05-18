@@ -222,12 +222,12 @@ export class AccountingService {
     // Mettre à jour le statut du document
     const totalPaid = record.payments.reduce((sum, p) => sum + p.amount, 0) + paymentData.amount;
     
-    let newStatus = PaymentStatus.PENDING;
+    let newStatus: PaymentStatus = PaymentStatus.PENDING;
     
     if (totalPaid >= record.amount) {
-      newStatus = PaymentStatus.PAID;
+      newStatus = 'PAID' as PaymentStatus;
     } else if (totalPaid > 0) {
-      newStatus = PaymentStatus.PARTIAL;
+      newStatus = 'PARTIAL' as PaymentStatus;
     }
 
     await this.prisma.accountingRecord.update({
@@ -235,7 +235,7 @@ export class AccountingService {
       data: {
         status: newStatus,
         paidAmount: totalPaid,
-        paidAt: newStatus === PaymentStatus.PAID ? new Date() : null,
+        paidAt: newStatus === 'PAID' as PaymentStatus ? new Date() : null,
       },
     });
 

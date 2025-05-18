@@ -12,7 +12,7 @@ En accord avec les meilleures pratiques identifiées, nous avons standardisé l'
 - **Gestion d'état**: React Query + Zustand
 - **Backend**: NestJS avec Prisma ORM
 
-> **IMPORTANT**: Tout nouveau développement doit suivre ces standards. L'ancienne version React (CRA) est maintenue uniquement pour la compatibilité avec les conteneurs Docker existants.
+> **IMPORTANT**: Tout nouveau développement doit suivre ces standards.
 
 ## 📋 Structure du projet standardisée
 
@@ -32,7 +32,7 @@ dtahc-project/
 │   │   └── prisma/
 │   │       ├── schema.prisma
 │   │       └── seed.ts           # Données de test
-│   ├── frontend/        # Next.js (STANDARD)
+│   ├── frontend/        # Next.js
 │   │   ├── app/                  # Pages organisées par route
 │   │   │   ├── comptable/        # Module comptable
 │   │   │   ├── clients/          # Module clients
@@ -42,11 +42,6 @@ dtahc-project/
 │   │   │       └── Sidebar.tsx   # Barre latérale
 │   │   └── lib/                  # Utilitaires et hooks
 │   └── shared/          # Types partagés
-├── src/                 # React CRA (LEGACY)
-│   ├── App.js           # Routes React
-│   ├── components/
-│   │   └── layout/
-│   └── pages/
 ├── docker/              # Configuration Docker
 ├── docs/                # Documentation
 └── scripts/             # Scripts utilitaires

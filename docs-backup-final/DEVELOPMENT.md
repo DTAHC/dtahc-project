@@ -1,6 +1,6 @@
 # Guide de développement DTAHC
 
-> ⚠️ **IMPORTANT**: Ce document fait partie de la documentation du projet DTAHC. Pour une vue d'ensemble complète, consultez [GUIDE.md](GUIDE.md).
+> ⚠️ **IMPORTANT**: Avant de commencer, consultez le fichier STANDARDS.md qui définit les règles du projet pour éviter les doubles implémentations et autres problèmes.
 
 Ce document décrit les environnements de développement et production pour le projet DTAHC, ainsi que les procédures pour assurer la cohérence entre les environnements.
 

@@ -1,7 +1,5 @@
 # Guide de Déploiement
 
-> ⚠️ **IMPORTANT**: Ce document fait partie de la documentation du projet DTAHC. Pour une vue d'ensemble complète, consultez [GUIDE.md](GUIDE.md).
-
 Ce document explique comment déployer l'application DTAHC sur un environnement de production.
 
 ## Prérequis

@@ -1,5 +1,7 @@
 # Guide de configuration globale DTAHC
 
+> ⚠️ **IMPORTANT**: Ce projet suit une structure standardisée. Consultez STANDARDS.md avant tout développement pour comprendre les règles à respecter.
+
 Ce document résume l'ensemble des configurations du projet DTAHC et sert de référence rapide pour les développeurs.
 
 ## 📋 Structure du projet

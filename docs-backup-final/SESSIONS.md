@@ -1,5 +1,7 @@
 # Journal des sessions de développement DTAHC
 
+> ⚠️ **IMPORTANT**: Ce projet suit des standards définis dans STANDARDS.md qui doivent être respectés à chaque session de développement.
+
 Ce document enregistre les sessions de développement avec Claude et sert de référence sur l'évolution du projet.
 
 ## Session du 17/05/2025 - Initialisation du projet
@@ -31,6 +33,24 @@ Mise en place de la structure de base du projet, développement des modules d'au
 2. Formulaire de création/édition de client (frontend)
 3. Système de lien sécurisé pour auto-remplissage des formulaires
 4. Module de workflow pour le suivi des dossiers
+
+## Session du 18/05/2025 - Standardisation et nettoyage
+
+### Résumé
+Nettoyage complet du projet pour standardiser sur Next.js uniquement, suppression des doubles implémentations et des fichiers redondants, et mise en place de standards clairs.
+
+### Éléments réalisés
+- ✅ Suppression de l'implémentation React legacy (conservée dans /src-backup)
+- ✅ Nettoyage des fichiers Docker redondants (conservés dans /docker-cleanup)
+- ✅ Suppression des dossiers backup en double
+- ✅ Suppression des fichiers de test temporaires
+- ✅ Mise à jour de la documentation pour reffléter la standardisation Next.js
+- ✅ Création du fichier STANDARDS.md pour éviter la réintroduction des problèmes
+
+### Prochaines étapes
+1. Finaliser le développement du module clients
+2. Implémenter le workflow de suivi des dossiers
+3. Développer le système de génération automatique de documents
 
 ### Remarques
 - La structure du projet est basée sur les maquettes et spécifications fournies

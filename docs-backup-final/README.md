@@ -1,6 +1,6 @@
 # DTAHC - Gestion des autorisations de travaux
 
-> ⚠️ **IMPORTANT**: Ce projet suit des standards stricts. Consultez GUIDE.md pour une documentation complète du projet.
+> ⚠️ **IMPORTANT**: Ce projet suit des standards stricts. Consultez STANDARDS.md avant de commencer à développer.
 
 Application web complète de gestion des dossiers d'autorisations de travaux, depuis l'acquisition client jusqu'au suivi des démarches administratives.
 
@@ -110,9 +110,7 @@ npm run dev --workspace=frontend
 
 ## 📚 Documentation
 
-Pour une documentation complète du projet, consultez le fichier [GUIDE.md](GUIDE.md).
-
-La documentation en ligne est également disponible sur [https://dtahc.github.io/dtahc-project/](https://dtahc.github.io/dtahc-project/)
+La documentation complète est disponible sur [https://dtahc.github.io/dtahc-project/](https://dtahc.github.io/dtahc-project/)
 
 ## 🤝 Contribution
 

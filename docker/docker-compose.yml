@@ -82,7 +82,9 @@ services:
 
   # Frontend Next.js en mode production
   frontend:
-    image: dtahc-next:latest
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.frontend
     container_name: dtahc-frontend
     restart: unless-stopped
     depends_on:
