@@ -10,7 +10,9 @@ import {
   CheckCircle, 
   Settings,
   Database,
-  Mail
+  Mail,
+  FolderOpen,
+  Plus
 } from 'lucide-react';
 
 type SidebarProps = {
@@ -46,7 +48,17 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
             }`}
           >
             <Users size={20} className="mr-3" />
-            <span className="font-medium">Gestion Clients</span>
+            <span className="font-medium">Clients</span>
+          </Link>
+          
+          <Link 
+            href="/dossiers" 
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-left ${
+              isActive('/dossiers') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <FolderOpen size={20} className="mr-3" />
+            <span className="font-medium">Dossiers</span>
           </Link>
           
           <Link 
@@ -76,7 +88,7 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
             }`}
           >
             <Mail size={20} className="mr-3" />
-            <span className="font-medium">Modèles Communication</span>
+            <span className="font-medium">Communication</span>
           </Link>
         </div>
         
@@ -85,17 +97,21 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
             Accès rapide
           </h3>
           <div className="mt-2 space-y-1">
-            <Link href="/dossiers/nouveaux" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+            <Link href="/clients/new" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+              <Plus size={16} className="mr-2 text-gray-500" />
+              Nouveau client
+            </Link>
+            <Link href="/dossiers/new" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
               <FileText size={16} className="mr-2 text-gray-500" />
-              Nouveaux dossiers
+              Nouveau dossier
             </Link>
-            <Link href="/dossiers/urgent" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+            <Link href="/dossiers?status=NOUVEAU" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
+              <AlertCircle size={16} className="mr-2 text-gray-500" />
+              Dossiers nouveaux
+            </Link>
+            <Link href="/dossiers?priority=URGENT" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
               <Clock size={16} className="mr-2 text-gray-500" />
-              Urgent à traiter
-            </Link>
-            <Link href="/dossiers/completes" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
-              <CheckCircle size={16} className="mr-2 text-gray-500" />
-              Dossiers complétés
+              Dossiers urgents
             </Link>
           </div>
         </div>
