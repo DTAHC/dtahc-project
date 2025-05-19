@@ -1,19 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function GestionComptable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Données factices pour la démonstration
-  const facturesMock = [
-    { id: 'FAC-2023-001', client: 'Dupont Jean', montant: 1250.00, date: '2023-10-15', statut: 'PAID', type: 'FACTURE' },
-    { id: 'FAC-2023-002', client: 'Martin Sophie', montant: 850.50, date: '2023-11-02', statut: 'PENDING', type: 'FACTURE' },
-    { id: 'DEV-2023-003', client: 'Bernard Thomas', montant: 2100.00, date: '2023-11-10', statut: 'PENDING', type: 'DEVIS' },
-    { id: 'FAC-2023-004', client: 'Petit Marie', montant: 970.25, date: '2023-10-25', statut: 'PARTIAL', type: 'FACTURE' },
-    { id: 'DEV-2023-005', client: 'Dubois Pierre', montant: 1600.00, date: '2023-11-15', statut: 'CANCELLED', type: 'DEVIS' },
-  ];
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Charger les clients depuis l'API
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients');
+        if (response.ok) {
+          const data = await response.json();
+          setClients(data);
+        } else {
+          console.error('Erreur lors du chargement des clients');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchClients();
+  }, []);
+  
+  // Générer des factures factices basées sur les clients réels
+  const generateFacturesFromClients = () => {
+    if (clients.length === 0) {
+      return [
+        { id: 'FAC-2023-001', client: 'Dupont Jean', montant: 1250.00, date: '2023-10-15', statut: 'PAID', type: 'FACTURE' },
+        { id: 'FAC-2023-002', client: 'Martin Sophie', montant: 850.50, date: '2023-11-02', statut: 'PENDING', type: 'FACTURE' },
+        { id: 'DEV-2023-003', client: 'Bernard Thomas', montant: 2100.00, date: '2023-11-10', statut: 'PENDING', type: 'DEVIS' },
+        { id: 'FAC-2023-004', client: 'Petit Marie', montant: 970.25, date: '2023-10-25', statut: 'PARTIAL', type: 'FACTURE' },
+        { id: 'DEV-2023-005', client: 'Dubois Pierre', montant: 1600.00, date: '2023-11-15', statut: 'CANCELLED', type: 'DEVIS' },
+      ];
+    }
+    
+    return clients.map((client, index) => {
+      const isFacture = index % 3 !== 2; // 2 factures pour 1 devis
+      const montant = Math.floor(Math.random() * 2000) + 500;
+      const date = new Date();
+      date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+      
+      const statuts = ['PAID', 'PENDING', 'PARTIAL', 'CANCELLED', 'OVERDUE'];
+      const statut = statuts[Math.floor(Math.random() * statuts.length)];
+      
+      return {
+        id: isFacture ? `FAC-2025-${index + 1}`.padStart(3, '0') : `DEV-2025-${index + 1}`.padStart(3, '0'),
+        client: `${client.contactInfo?.firstName} ${client.contactInfo?.lastName}`,
+        montant: montant,
+        date: date.toISOString().split('T')[0].split('-').reverse().join('/'),
+        statut: statut,
+        type: isFacture ? 'FACTURE' : 'DEVIS',
+        clientId: client.id
+      };
+    });
+  };
+  
+  // Données pour les factures
+  const facturesMock = generateFacturesFromClients();
 
   const getStatusBadge = (status: string) => {
     const statusClasses: {[key: string]: string} = {

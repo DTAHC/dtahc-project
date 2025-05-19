@@ -47,11 +47,27 @@ export default function NewDossierPage() {
       });
 
       if (!response.ok) {
+        console.error('Erreur lors de la création du dossier: ', response.status);
+        // Récupérer le corps de l'erreur si possible
+        try {
+          const errorText = await response.text();
+          console.error('Détail de l\'erreur:', errorText);
+        } catch (e) {
+          console.error('Impossible de lire le détail de l\'erreur');
+        }
         throw new Error('Erreur lors de la création du dossier');
       }
 
       const dossier = await response.json();
-      router.push(`/dossiers/${dossier.id}`);
+      console.log('Dossier créé avec succès:', dossier);
+      
+      // Si on vient de la page client, on y retourne au lieu d'aller à la page dossier
+      if (clientId) {
+        router.push(`/clients/${clientId}?created=true`);
+      } else {
+        // Force un rafraîchissement de la liste des dossiers en passant par la liste
+        router.push(`/dossiers?refresh=${Date.now()}`);
+      }
     } catch (error) {
       console.error('Erreur:', error);
       alert('Une erreur est survenue lors de la création du dossier.');

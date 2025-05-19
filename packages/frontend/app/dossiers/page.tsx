@@ -11,16 +11,46 @@ export default function DossiersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
 
+  // Ajout d'un état pour forcer le rafraîchissement
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Force un rafraîchissement si on revient à cette page
+  useEffect(() => {
+    // Écouter l'événement de navigation
+    const handleRouteChange = () => {
+      setRefreshKey(prevKey => prevKey + 1);
+    };
+    
+    // S'abonner aux événements de navigation
+    window.addEventListener('focus', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleRouteChange);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchDossiers = async () => {
       try {
-        const response = await fetch('/api/dossiers');
+        setIsLoading(true);
+        console.log('Chargement des dossiers...');
+        
+        const response = await fetch('/api/dossiers', {
+          // Ajouter un paramètre cache-busting pour éviter la mise en cache
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          // Ajouter un timestamp pour forcer un nouveau fetch
+          cache: 'no-store',
+        });
         
         if (!response.ok) {
           throw new Error('Erreur lors de la récupération des dossiers');
         }
         
         let data = await response.json();
+        console.log('Dossiers récupérés:', data);
         
         // Filtrer par statut si nécessaire
         if (statusFilter) {
@@ -41,7 +71,7 @@ export default function DossiersPage() {
     };
 
     fetchDossiers();
-  }, [statusFilter, priorityFilter]);
+  }, [statusFilter, priorityFilter, refreshKey]);
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -94,12 +94,19 @@ export const DossierForm: React.FC<DossierFormProps> = ({
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={DossierType.DP}>Déclaration Préalable (DP)</option>
-              <option value={DossierType.PC}>Permis de Construire (PC)</option>
-              <option value={DossierType.PCMI}>Permis de Construire Maison Individuelle (PCMI)</option>
-              <option value={DossierType.PA}>Permis d'Aménager (PA)</option>
-              <option value={DossierType.AT_ERP}>Autorisation de Travaux ERP (AT-ERP)</option>
-              <option value={DossierType.DAACT}>DAACT</option>
-              <option value={DossierType.DOE}>DOE</option>
+              <option value={DossierType.DP_MUR}>DP Mur</option>
+              <option value={DossierType.DP_ITE}>DP ITE</option>
+              <option value={DossierType.DP_FENETRE}>DP Fenêtre</option>
+              <option value={DossierType.DP_PISCINE}>DP Piscine</option>
+              <option value={DossierType.DP_SOLAIRE}>DP Solaire</option>
+              <option value={DossierType.PC_RT}>PC RT</option>
+              <option value={DossierType.PC_RT_SIGNATURE}>PC RT avec signature</option>
+              <option value={DossierType.PC_MODIF}>PC Modificatif</option>
+              <option value={DossierType.ERP}>ERP</option>
+              <option value={DossierType.FENETRE_ITE}>Fenêtre ITE</option>
+              <option value={DossierType.PLAN_DE_MASSE}>Plan de masse</option>
+              <option value={DossierType.PAC}>PAC</option>
+              <option value={DossierType.REALISATION_3D}>Réalisation 3D</option>
             </select>
             {errors.type && (
               <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>
@@ -115,9 +122,8 @@ export const DossierForm: React.FC<DossierFormProps> = ({
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={Priority.NORMAL}>Normale</option>
-              <option value={Priority.FAIBLE}>Faible</option>
-              <option value={Priority.URGENT}>Urgente</option>
-              <option value={Priority.CRITIQUE}>Critique</option>
+              <option value={Priority.LOW}>Faible</option>
+              <option value={Priority.HIGH}>Haute</option>
             </select>
           </div>
           
@@ -127,10 +133,8 @@ export const DossierForm: React.FC<DossierFormProps> = ({
             </label>
             <input
               type="number"
-              {...register('surfaceExistant', { 
-                valueAsNumber: true,
-                min: { value: 0, message: 'La surface doit être positive' }
-              })}
+              step="0.01"
+              {...register('surfaceExistant')}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.surfaceExistant && (
@@ -144,10 +148,8 @@ export const DossierForm: React.FC<DossierFormProps> = ({
             </label>
             <input
               type="number"
-              {...register('surfaceProjet', { 
-                valueAsNumber: true,
-                min: { value: 0, message: 'La surface doit être positive' }
-              })}
+              step="0.01"
+              {...register('surfaceProjet')}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {errors.surfaceProjet && (

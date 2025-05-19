@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart2, Users, FileText, Clock, AlertCircle, CheckCircle, 
   Search, Filter, Calendar, Plus, ChevronDown, ChevronRight, 
@@ -15,6 +15,11 @@ type Dossier = {
   statut: string;
   priority: 'low' | 'normal' | 'high';
   date: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  clientId?: string;
+  surface?: string;
+  reference?: string;
   modifications: {
     field: string;
     oldValue: string;
@@ -58,70 +63,160 @@ export default function Dashboard() {
   };
   
   // Données des dossiers
-  const [dossiers, setDossiers] = useState<Dossier[]>([
-    { 
-      id: '001', 
-      client: 'Dupont Jean', 
-      pro: 'PARTICULIER', 
-      type: 'DP FENETRE', 
-      etape: 'ÉTUDE APS', 
-      statut: 'ATTENTE PIÈCE', 
-      priority: 'normal', 
-      date: '12/05/2025',
-      modifications: [
-        { field: 'etape', oldValue: 'INITIAL', newValue: 'ÉTUDE APS', user: 'Julie Martin', date: '10/05/2025 09:30' }
-      ]
-    },
-    { 
-      id: '002', 
-      client: 'Martin Sophie', 
-      pro: 'MDT ANTONY', 
-      type: 'DP+MUR', 
-      etape: 'INITIAL', 
-      statut: 'TOP URGENT', 
-      priority: 'high', 
-      date: '15/05/2025',
-      modifications: [
-        { field: 'statut', oldValue: 'ATTENTE PIÈCE', newValue: 'TOP URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
-      ]
-    },
-    { 
-      id: '003', 
-      client: 'Lefebvre Pierre', 
-      pro: 'COMBLE DF', 
-      type: 'PC+RT', 
-      etape: 'DOSSIER COMPLET', 
-      statut: 'À DÉPOSER EN LIGNE', 
-      priority: 'normal', 
-      date: '10/05/2025',
-      modifications: []
-    },
-    { 
-      id: '004', 
-      client: 'Bernard Emma', 
-      pro: 'ARCADIA', 
-      type: 'PC+RT+SIGNATURE', 
-      etape: 'RE 2020', 
-      statut: 'LIVRÉ CLIENT', 
-      priority: 'low', 
-      date: '08/05/2025',
-      modifications: [
-        { field: 'etape', oldValue: 'DOSSIER COMPLET', newValue: 'RE 2020', user: 'Thomas Dubois', date: '05/05/2025 14:22' },
-        { field: 'statut', oldValue: 'À DÉPOSER EN LIGNE', newValue: 'LIVRÉ CLIENT', user: 'Thomas Dubois', date: '08/05/2025 16:45' }
-      ]
-    },
-    { 
-      id: '005', 
-      client: 'Durand Thomas', 
-      pro: 'PARTICULIER', 
-      type: 'DP FENETRE', 
-      etape: 'ÉTUDE APS', 
-      statut: 'ATTENTE PIÈCE', 
-      priority: 'high', 
-      date: '14/05/2025',
-      modifications: []
-    }
-  ]);
+  const [dossiers, setDossiers] = useState<Dossier[]>([]);
+  const [isLoadingDossiers, setIsLoadingDossiers] = useState(true);
+
+  // État pour rafraîchir les données
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Force un rafraîchissement des données lors du focus sur la fenêtre
+  useEffect(() => {
+    const handleFocus = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+  
+  // Charger les dossiers depuis l'API
+  useEffect(() => {
+    const fetchDossiers = async () => {
+      try {
+        setIsLoadingDossiers(true);
+        console.log('Dashboard: Chargement des dossiers...');
+        
+        const response = await fetch('/api/dossiers', {
+          // Éviter la mise en cache
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Dashboard: Dossiers récupérés:', data);
+          
+          // Transformer les données de l'API au format attendu par le dashboard
+          const transformedDossiers = data.map((dossier: any) => {
+            console.log('Traitement dossier:', dossier);
+            return {
+              id: dossier.id,
+              client: `${dossier.client?.contactInfo?.firstName || ''} ${dossier.client?.contactInfo?.lastName || ''}`,
+              pro: dossier.client?.clientType || 'PARTICULIER',
+              type: dossier.type || 'DP FENETRE',
+              etape: dossier.workflowState || 'INITIAL',
+              statut: dossier.status || 'NOUVEAU',
+              priority: dossier.priority?.toLowerCase() || 'normal',
+              date: new Date(dossier.createdAt).toLocaleDateString('fr-FR'),
+              clientEmail: dossier.client?.contactInfo?.email || '',
+              clientPhone: dossier.client?.contactInfo?.phone || '',
+              clientId: dossier.clientId || dossier.client?.id || '',
+              reference: dossier.reference || '',
+              surface: dossier.surfaceProjet ? `${dossier.surfaceProjet} m²` : '',
+              modifications: dossier.modifications || []
+            };
+          });
+          
+          console.log('Dashboard: Dossiers transformés:', transformedDossiers);
+          setDossiers(transformedDossiers);
+        } else {
+          console.error('Erreur lors du chargement des dossiers');
+          // Utiliser des données fictives en cas d'erreur
+          setDossiers([
+            { 
+              id: '001', 
+              client: 'Dupont Jean', 
+              pro: 'PARTICULIER', 
+              type: 'DP FENETRE', 
+              etape: 'ÉTUDE APS', 
+              statut: 'ATTENTE PIÈCE', 
+              priority: 'normal', 
+              date: '12/05/2025',
+              modifications: [
+                { field: 'etape', oldValue: 'INITIAL', newValue: 'ÉTUDE APS', user: 'Julie Martin', date: '10/05/2025 09:30' }
+              ]
+            },
+            { 
+              id: '002', 
+              client: 'Martin Sophie', 
+              pro: 'MDT ANTONY', 
+              type: 'DP+MUR', 
+              etape: 'INITIAL', 
+              statut: 'TOP URGENT', 
+              priority: 'high', 
+              date: '15/05/2025',
+              modifications: [
+                { field: 'statut', oldValue: 'ATTENTE PIÈCE', newValue: 'TOP URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
+              ]
+            },
+            { 
+              id: '003', 
+              client: 'Lefebvre Pierre', 
+              pro: 'COMBLE DF', 
+              type: 'PC+RT', 
+              etape: 'DOSSIER COMPLET', 
+              statut: 'À DÉPOSER EN LIGNE', 
+              priority: 'normal', 
+              date: '10/05/2025',
+              modifications: []
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        // Utiliser des données fictives en cas d'erreur
+        setDossiers([
+          { 
+            id: '001', 
+            client: 'Dupont Jean', 
+            pro: 'PARTICULIER', 
+            type: 'DP FENETRE', 
+            etape: 'ÉTUDE APS', 
+            statut: 'ATTENTE PIÈCE', 
+            priority: 'normal', 
+            date: '12/05/2025',
+            modifications: [
+              { field: 'etape', oldValue: 'INITIAL', newValue: 'ÉTUDE APS', user: 'Julie Martin', date: '10/05/2025 09:30' }
+            ]
+          },
+          { 
+            id: '002', 
+            client: 'Martin Sophie', 
+            pro: 'MDT ANTONY', 
+            type: 'DP+MUR', 
+            etape: 'INITIAL', 
+            statut: 'TOP URGENT', 
+            priority: 'high', 
+            date: '15/05/2025',
+            modifications: [
+              { field: 'statut', oldValue: 'ATTENTE PIÈCE', newValue: 'TOP URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
+            ]
+          },
+          { 
+            id: '003', 
+            client: 'Lefebvre Pierre', 
+            pro: 'COMBLE DF', 
+            type: 'PC+RT', 
+            etape: 'DOSSIER COMPLET', 
+            statut: 'À DÉPOSER EN LIGNE', 
+            priority: 'normal', 
+            date: '10/05/2025',
+            modifications: []
+          }
+        ]);
+      } finally {
+        setIsLoadingDossiers(false);
+      }
+    };
+    
+    fetchDossiers();
+  }, [refreshKey]);
   
   // Fonction pour basculer l'expansion des lignes
   const toggleExpand = (id: string) => {
@@ -495,8 +590,14 @@ export default function Dashboard() {
                           <p className="text-sm mb-1">
                             <span className="text-gray-500 mr-2">Client:</span>{dossier.client}
                           </p>
+                          <p className="text-sm mb-1">
+                            <span className="text-gray-500 mr-2">Email:</span>{dossier.clientEmail || "Non renseigné"}
+                          </p>
+                          <p className="text-sm mb-1">
+                            <span className="text-gray-500 mr-2">Téléphone:</span>{dossier.clientPhone || "Non renseigné"}
+                          </p>
                           <p className="text-sm">
-                            <span className="text-gray-500 mr-2">Email:</span>client@example.com
+                            <span className="text-gray-500 mr-2">Réf.:</span>{dossier.reference || "Non renseigné"}
                           </p>
                         </div>
                         <div>
@@ -519,7 +620,7 @@ export default function Dashboard() {
                               options={etapesOptions}
                             />
                           </div>
-                          <div className="text-sm flex items-center">
+                          <div className="text-sm mb-2 flex items-center">
                             <span className="text-gray-500 mr-2 min-w-16">Statut:</span>
                             <EditableCell 
                               dossierId={dossier.id} 
@@ -527,6 +628,10 @@ export default function Dashboard() {
                               value={dossier.statut} 
                               options={statutsOptions}
                             />
+                          </div>
+                          <div className="text-sm flex items-center">
+                            <span className="text-gray-500 mr-2 min-w-16">Surface:</span>
+                            <span>{dossier.surface || "Non renseignée"}</span>
                           </div>
                         </div>
                         <div>
