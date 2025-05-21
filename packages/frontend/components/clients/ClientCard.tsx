@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Client } from '@dtahc/shared';
+import { formatClientId } from '@/utils/formatters';
 
 interface ClientCardProps {
   client: Client;
@@ -15,7 +16,9 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client }) => {
             <h3 className="text-lg font-semibold mb-1">
               {client.contactInfo?.firstName} {client.contactInfo?.lastName}
             </h3>
-            <p className="text-sm text-gray-600 mb-2">{client.reference}</p>
+            <p className="text-sm text-gray-600 mb-2">
+              <span className="font-medium">Réf:</span> {formatClientId(client.id, client.reference)}
+            </p>
             
             <p className="text-sm text-gray-700 mb-1">
               <span className="font-medium">Email:</span> {client.contactInfo?.email}

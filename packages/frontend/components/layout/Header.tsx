@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
+import ClientOnlyIcon from '../ui/ClientOnlyIcon';
 
 type HeaderProps = {
   user?: {
@@ -28,7 +31,7 @@ export default function Header({
       
       <div className="flex items-center space-x-4">
         <div className="relative">
-          <Bell size={20} className="text-gray-400" />
+          <ClientOnlyIcon icon={<Bell size={20} className="text-gray-400" />} />
           {user.notificationsCount && user.notificationsCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
               {user.notificationsCount > 9 ? '9+' : user.notificationsCount}

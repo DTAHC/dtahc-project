@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { DossierCard } from '@/components/dossiers/DossierCard';
 import { Dossier, DossierStatus, Priority } from '@dtahc/shared';
 
@@ -14,18 +15,22 @@ export default function DossiersPage() {
   // Ajout d'un état pour forcer le rafraîchissement
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Force un rafraîchissement si on revient à cette page
+  // Force un rafraîchissement si on revient à cette page ou si un dossier est créé/modifié
   useEffect(() => {
-    // Écouter l'événement de navigation
-    const handleRouteChange = () => {
+    // Protection contre le SSR (exécuter uniquement côté client)
+    if (typeof window === 'undefined') return;
+    
+    // Écouter l'événement de mise à jour des dossiers
+    const handleDossierUpdated = () => {
+      console.log('DossierPage: dossierStorageUpdated event received');
       setRefreshKey(prevKey => prevKey + 1);
     };
     
-    // S'abonner aux événements de navigation
-    window.addEventListener('focus', handleRouteChange);
+    // S'abonner aux événements
+    window.addEventListener('dossierStorageUpdated', handleDossierUpdated);
     
     return () => {
-      window.removeEventListener('focus', handleRouteChange);
+      window.removeEventListener('dossierStorageUpdated', handleDossierUpdated);
     };
   }, []);
 
@@ -74,20 +79,21 @@ export default function DossiersPage() {
   }, [statusFilter, priorityFilter, refreshKey]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Dossiers</h1>
-          <p className="text-gray-600">Gérez vos dossiers d'autorisation de travaux.</p>
+    <DashboardLayout activeMenu="dossiers">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Dossiers</h1>
+            <p className="text-gray-600">Gérez vos dossiers d'autorisation de travaux.</p>
+          </div>
+          
+          <Link 
+            href="/clients" 
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
+          >
+            Créer un dossier
+          </Link>
         </div>
-        
-        <Link 
-          href="/dossiers/new" 
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
-        >
-          Nouveau dossier
-        </Link>
-      </div>
 
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="w-full md:w-auto">
@@ -134,7 +140,7 @@ export default function DossiersPage() {
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <p className="text-gray-600 mb-4">Aucun dossier trouvé.</p>
           <Link 
-            href="/dossiers/new" 
+            href="/clients" 
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md"
           >
             Créer un nouveau dossier
@@ -147,6 +153,7 @@ export default function DossiersPage() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

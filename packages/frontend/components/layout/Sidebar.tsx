@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,8 +14,10 @@ import {
   Database,
   Mail,
   FolderOpen,
-  Plus
+  Plus,
+  MapPin
 } from 'lucide-react';
+import ClientOnlyIcon from '../ui/ClientOnlyIcon';
 
 type SidebarProps = {
   activeMenu?: string;
@@ -37,7 +41,10 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               isActive('/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <BarChart2 size={20} className="mr-3" />
+            <ClientOnlyIcon 
+              icon={<BarChart2 size={20} className="mr-3" />} 
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
             <span className="font-medium">Tableau de Bord</span>
           </Link>
           
@@ -47,7 +54,10 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               isActive('/clients') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <Users size={20} className="mr-3" />
+            <ClientOnlyIcon 
+              icon={<Users size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
             <span className="font-medium">Clients</span>
           </Link>
           
@@ -57,7 +67,10 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               isActive('/dossiers') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <FolderOpen size={20} className="mr-3" />
+            <ClientOnlyIcon 
+              icon={<FolderOpen size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
             <span className="font-medium">Dossiers</span>
           </Link>
           
@@ -67,7 +80,10 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               isActive('/comptable') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <Database size={20} className="mr-3" />
+            <ClientOnlyIcon 
+              icon={<Database size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
             <span className="font-medium">Gestion Comptable</span>
           </Link>
           
@@ -77,18 +93,37 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               isActive('/admin') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <Settings size={20} className="mr-3" />
+            <ClientOnlyIcon 
+              icon={<Settings size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
             <span className="font-medium">Administration</span>
           </Link>
           
           <Link 
-            href="/communication" 
+            href="/emails" 
             className={`flex items-center w-full px-4 py-3 rounded-lg text-left ${
-              isActive('/communication') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
+              isActive('/emails') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            <Mail size={20} className="mr-3" />
-            <span className="font-medium">Communication</span>
+            <ClientOnlyIcon 
+              icon={<Mail size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
+            <span className="font-medium">Emails</span>
+          </Link>
+
+          <Link 
+            href="/urbanisme" 
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-left ${
+              isActive('/urbanisme') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <ClientOnlyIcon 
+              icon={<MapPin size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
+            <span className="font-medium">Règles urbanisme</span>
           </Link>
         </div>
         
@@ -98,19 +133,31 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
           </h3>
           <div className="mt-2 space-y-1">
             <Link href="/clients/new" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
-              <Plus size={16} className="mr-2 text-gray-500" />
+              <ClientOnlyIcon 
+                icon={<Plus size={16} className="mr-2 text-gray-500" />}
+                fallback={<div className="w-4 h-4 mr-2" />}
+              />
               Nouveau client
             </Link>
             <Link href="/dossiers/new" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
-              <FileText size={16} className="mr-2 text-gray-500" />
+              <ClientOnlyIcon 
+                icon={<FileText size={16} className="mr-2 text-gray-500" />}
+                fallback={<div className="w-4 h-4 mr-2" />}
+              />
               Nouveau dossier
             </Link>
             <Link href="/dossiers?status=NOUVEAU" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
-              <AlertCircle size={16} className="mr-2 text-gray-500" />
+              <ClientOnlyIcon 
+                icon={<AlertCircle size={16} className="mr-2 text-gray-500" />}
+                fallback={<div className="w-4 h-4 mr-2" />}
+              />
               Dossiers nouveaux
             </Link>
             <Link href="/dossiers?priority=URGENT" className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">
-              <Clock size={16} className="mr-2 text-gray-500" />
+              <ClientOnlyIcon 
+                icon={<Clock size={16} className="mr-2 text-gray-500" />}
+                fallback={<div className="w-4 h-4 mr-2" />}
+              />
               Dossiers urgents
             </Link>
           </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Dossier, WorkflowState, Priority, DossierStatus } from '@dtahc/shared';
+import { formatDossierId } from '@/utils/formatters';
 
 interface DossierCardProps {
   dossier: Dossier;
@@ -12,14 +13,26 @@ export const DossierCard: React.FC<DossierCardProps> = ({ dossier }) => {
     switch (status) {
       case DossierStatus.NOUVEAU:
         return 'bg-blue-100 text-blue-800';
-      case DossierStatus.EN_COURS:
-        return 'bg-yellow-100 text-yellow-800';
-      case DossierStatus.EN_ATTENTE:
-        return 'bg-orange-100 text-orange-800';
-      case DossierStatus.TERMINE:
+      case DossierStatus.LIVRE_CLIENT:
         return 'bg-green-100 text-green-800';
-      case DossierStatus.ARCHIVE:
+      case DossierStatus.DEPOT_EN_LIGNE:
+        return 'bg-teal-100 text-teal-800';
+      case DossierStatus.TOP_URGENT:
+        return 'bg-red-100 text-red-800';
+      case DossierStatus.ANNULE:
         return 'bg-gray-100 text-gray-800';
+      case DossierStatus.INCOMPLETUDE_MAIRIE:
+        return 'bg-yellow-100 text-yellow-800';
+      case DossierStatus.REFUS:
+        return 'bg-red-100 text-red-800';
+      case DossierStatus.A_DEPOSER_EN_LIGNE:
+        return 'bg-purple-100 text-purple-800';
+      case DossierStatus.A_ENVOYER_AU_CLIENT:
+        return 'bg-indigo-100 text-indigo-800';
+      case DossierStatus.EN_INSTRUCTION:
+        return 'bg-orange-100 text-orange-800';
+      case DossierStatus.ACCEPTE:
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -28,13 +41,11 @@ export const DossierCard: React.FC<DossierCardProps> = ({ dossier }) => {
   // Fonction pour obtenir la couleur de priorité
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
-      case Priority.FAIBLE:
+      case Priority.LOW:
         return 'bg-green-100 text-green-800';
       case Priority.NORMAL:
         return 'bg-blue-100 text-blue-800';
-      case Priority.URGENT:
-        return 'bg-orange-100 text-orange-800';
-      case Priority.CRITIQUE:
+      case Priority.HIGH:
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-blue-100 text-blue-800';
@@ -47,14 +58,16 @@ export const DossierCard: React.FC<DossierCardProps> = ({ dossier }) => {
   };
 
   return (
-    <Link href={`/dossiers/${dossier.id}`}>
+    <Link href={`/clients/${dossier.clientId}`}>
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all cursor-pointer">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-semibold mb-1">
               {dossier.title}
             </h3>
-            <p className="text-sm text-gray-600 mb-2">{dossier.reference}</p>
+            <p className="text-sm text-gray-600 mb-2">
+              <span className="font-medium">Réf:</span> {formatDossierId(dossier.id, dossier.reference)}
+            </p>
             
             <p className="text-sm text-gray-700 mb-1">
               <span className="font-medium">Type:</span> {dossier.type}

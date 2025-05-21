@@ -66,7 +66,7 @@ export default function NewDossierPage() {
         router.push(`/clients/${clientId}?created=true`);
       } else {
         // Force un rafraîchissement de la liste des dossiers en passant par la liste
-        router.push(`/dossiers?refresh=${Date.now()}`);
+        router.push(`/dossiers`);
       }
     } catch (error) {
       console.error('Erreur:', error);

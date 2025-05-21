@@ -1,18 +1,22 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import HydrationFix from '../ui/HydrationFix';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
   activeMenu?: string;
 };
 
-export default function DashboardLayout({ 
+function DashboardLayout({ 
   children, 
   activeMenu = 'dashboard'
 }: DashboardLayoutProps) {
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
+      {/* Script de correction d'hydratation */}
+      <HydrationFix />
+      
       {/* Header */}
       <Header />
       
@@ -28,3 +32,6 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+// Optimisation pour éviter les rendus inutiles
+export default memo(DashboardLayout);
