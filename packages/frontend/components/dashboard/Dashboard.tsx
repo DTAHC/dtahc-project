@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   BarChart2, Users, FileText, Clock, AlertCircle, CheckCircle, 
   Search, Filter, Calendar, Plus, ChevronDown, ChevronRight, 
-  MoreVertical, RefreshCw, Eye, Edit2, Save, X
+  MoreVertical, RefreshCw, Eye, Edit2, Save, X, 
+  ArrowDownUp, Clipboard, FileCheck, AlertTriangle, ListFilter
 } from 'lucide-react';
+import { formatDossierId, formatDate } from '@/utils/formatters';
+import { updateDossier } from '@/lib/api/dossiers';
+import { DossierType, WorkflowState, DossierStatus, Priority } from '@dtahc/shared';
 
-// Types pour les données
+// Types pour les données améliorées
 type Dossier = {
   id: string;
   client: string;
@@ -15,11 +21,16 @@ type Dossier = {
   statut: string;
   priority: 'low' | 'normal' | 'high';
   date: string;
+  dateObj: Date;
   clientEmail?: string;
   clientPhone?: string;
   clientId?: string;
-  surface?: string;
   reference?: string;
+  surface?: string;
+  surfaceExistant?: number;
+  surfaceProjet?: number;
+  deadline?: Date | null;
+  rawData: any; // Les données brutes pour les mises à jour API
   modifications: {
     field: string;
     oldValue: string;
@@ -44,16 +55,20 @@ export default function Dashboard() {
   const [typeFilter, setTypeFilter] = useState('Tous');
   const [etapeFilter, setEtapeFilter] = useState('Toutes');
   const [statutFilter, setStatutFilter] = useState('Tous');
+  const [priorityFilter, setPriorityFilter] = useState('Toutes');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingCell, setEditingCell] = useState<EditingCell>(null);
   const [showModificationHistory, setShowModificationHistory] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   
   // Données pour les sélecteurs
   const etatsOptions = ['Nouveau', 'En cours', 'Validation', 'Livré', 'Soumis', 'Accepté', 'Refusé'];
-  const etapesOptions = ['INITIAL', 'ATTENTE PIÈCE', 'ÉTUDE APS', 'DOSSIER COMPLET', 'RE 2020', 'SIGNATURE ARCHI'];
-  const statutsOptions = ['LIVRÉ CLIENT', 'DÉPÔT EN LIGNE', 'TOP URGENT', 'ANNULÉ', 'INCOMPLETUDE MAIRIE', 'REFUS DE PC/DP', 'À DÉPOSER EN LIGNE', 'À ENVOYER AU CLIENT'];
-  const typesOptions = ['DP', 'DP+MUR', 'DP ITE', 'DP FENETRE', 'DP piscine', 'DP solair', 'PC+RT', 'PC+RT+SIGNATURE', 'PC MODIF', 'ERP', 'FENETRE + ITE', 'PLAN DE MASSE', 'PAC', 'Réalisation 3D'];
-  const prosOptions = ['PARTICULIER', 'ARCADIA', 'COMBLE DF', 'ECA', 'LT ARTISAN', 'SODERBAT', 'COMBLESPACE', 'MDT ANTONY', 'MDT C.ROBERT', 'MDT YERRES', 'MDT ST-GEN', 'B3C', 'TERRASSE ET JAR', 'RENOKEA', 'GROUPE APB', 'PUREWATT', 'S.AUGUSTO', '3D TRAVAUX', 'BATI PRESTO', 'CPHF', 'MDT FONT'];
+  const etapesOptions = ['INITIAL', 'ATTENTE_PIECE', 'ETUDE_APS', 'DOSSIER_COMPLET', 'RE_2020', 'SIGNATURE_ARCHI'];
+  const statutsOptions = ['NOUVEAU', 'LIVRE_CLIENT', 'DEPOT_EN_LIGNE', 'TOP_URGENT', 'ANNULE', 'INCOMPLETUDE_MAIRIE', 'REFUS', 'A_DEPOSER_EN_LIGNE', 'A_ENVOYER_AU_CLIENT', 'EN_INSTRUCTION', 'ACCEPTE'];
+  const typesOptions = ['DP', 'DP_MUR', 'DP_ITE', 'DP_FENETRE', 'DP_PISCINE', 'DP_SOLAIRE', 'PC_RT', 'PC_RT_SIGNATURE', 'PC_MODIF', 'ERP', 'FENETRE_ITE', 'PLAN_DE_MASSE', 'PAC', 'REALISATION_3D'];
+  const prosOptions = ['PARTICULIER', 'ARCADIA', 'COMBLE_DF', 'ECA', 'LT_ARTISAN', 'SODERBAT', 'COMBLESPACE', 'MDT_ANTONY', 'MDT_C_ROBERT', 'MDT_YERRES', 'MDT_ST_GEN', 'B3C', 'TERRASSE_ET_JAR', 'RENOKEA', 'GROUPE_APB', 'PUREWATT', 'S_AUGUSTO', '3D_TRAVAUX', 'BATI_PRESTO', 'CPHF', 'MDT_FONT'];
   
   // Données utilisateur courant
   const currentUser = {
@@ -65,79 +80,187 @@ export default function Dashboard() {
   // Données des dossiers
   const [dossiers, setDossiers] = useState<Dossier[]>([]);
   const [isLoadingDossiers, setIsLoadingDossiers] = useState(true);
+  
+  // Statistiques calculées
+  const [stats, setStats] = useState({
+    total: 0,
+    nouveaux: 0,
+    aDeposer: 0,
+    completes: 0,
+    enCours: 0,
+    attente: 0,
+    urgents: 0,
+    instruction: 0,
+    clients: 0,
+    aFacturer: 0,
+    impayes: 0,
+    nouveauxMois: 0
+  });
 
   // État pour rafraîchir les données
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Force un rafraîchissement des données lors du focus sur la fenêtre
+  // Gestion des événements de modification et de mise en évidence des dossiers
   useEffect(() => {
-    const handleFocus = () => {
+    // Protection contre le SSR (exécuter uniquement côté client)
+    if (typeof window === 'undefined') return;
+    
+    // Vérifier si un dossier doit être mis en évidence (après création depuis fiche-projet)
+    const checkForHighlightedDossier = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const highlightDossierId = urlParams.get('highlight');
+      
+      if (highlightDossierId) {
+        console.log('Dashboard: Highlighting dossier:', highlightDossierId);
+        // Mettre à jour l'état pour mettre en évidence la ligne
+        setExpandedRow(highlightDossierId);
+        
+        // Optionnellement, faire défiler jusqu'à la ligne mise en évidence
+        setTimeout(() => {
+          const element = document.getElementById(`dossier-${highlightDossierId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+        
+        // Nettoyage de l'URL pour éviter les rechargements constants
+        if (history.replaceState) {
+          history.replaceState(null, '', window.location.pathname);
+        }
+      }
+    };
+    
+    // Rafraîchir uniquement quand un dossier est ajouté ou modifié
+    const handleDossierUpdated = (event: Event) => {
+      // Cast à CustomEvent si possible
+      const customEvent = event as CustomEvent;
+      const details = customEvent.detail || {};
+      
+      console.log('Dashboard: dossierStorageUpdated event received', details);
+      // Incrémenter la clé de rafraîchissement pour déclencher un re-fetch
       setRefreshKey(prev => prev + 1);
     };
     
-    window.addEventListener('focus', handleFocus);
+    // Écouter uniquement les événements dossierStorageUpdated
+    window.addEventListener('dossierStorageUpdated', handleDossierUpdated as EventListener);
+    
+    // Vérifier une fois au chargement si un ID est à mettre en évidence
+    checkForHighlightedDossier();
     
     return () => {
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('dossierStorageUpdated', handleDossierUpdated as EventListener);
     };
   }, []);
   
-  // Charger les dossiers depuis l'API
+  // Fonction pour traiter les dossiers
+  const processStoredDossiers = (data: any[]) => {
+    // Transformer les données au format attendu par le dashboard
+    const transformedDossiers = data.map((dossier: any) => {
+      return {
+        id: dossier.id,
+        client: `${dossier.client?.contactInfo?.firstName || ''} ${dossier.client?.contactInfo?.lastName || ''}`,
+        pro: dossier.client?.clientType || 'PARTICULIER',
+        type: dossier.type || 'DP_FENETRE',
+        etape: dossier.workflowState || 'INITIAL',
+        statut: dossier.status || 'NOUVEAU',
+        priority: dossier.priority?.toLowerCase() || 'normal',
+        date: new Date(dossier.createdAt).toLocaleDateString('fr-FR'),
+        dateObj: new Date(dossier.createdAt),
+        clientEmail: dossier.client?.contactInfo?.email || '',
+        clientPhone: dossier.client?.contactInfo?.phone || '',
+        clientId: dossier.clientId || dossier.client?.id || '',
+        reference: dossier.reference || '',
+        surface: dossier.surfaceProjet ? `${dossier.surfaceProjet} m²` : '',
+        surfaceExistant: dossier.surfaceExistant,
+        surfaceProjet: dossier.surfaceProjet,
+        deadline: dossier.deadline ? new Date(dossier.deadline) : null,
+        rawData: dossier, // Store the original data for API updates
+        modifications: dossier.modifications || []
+      };
+    });
+    
+    console.log('Dashboard: Dossiers transformés:', transformedDossiers);
+    setDossiers(transformedDossiers);
+    calculateStats(transformedDossiers);
+    setLastUpdated(new Date());
+  };
+  
+  // Charger les dossiers depuis l'API ou localStorage
   useEffect(() => {
+    console.log(`Dashboard: fetchDossiers called with refreshKey=${refreshKey}`);
+    
+    // Variable pour suivre si le composant est monté
+    let isMounted = true;
+    
     const fetchDossiers = async () => {
+      // Éviter des appels multiples si en cours de chargement
+      if (isUpdating) return;
+      
       try {
         setIsLoadingDossiers(true);
+        setIsUpdating(true);
         console.log('Dashboard: Chargement des dossiers...');
         
-        const response = await fetch('/api/dossiers', {
-          // Éviter la mise en cache
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          },
-          cache: 'no-store',
-        });
+        // Utiliser localStorage directement
+        if (typeof window !== 'undefined') {
+          const storedDossiers = localStorage.getItem('dtahc_dossiers');
+          if (storedDossiers) {
+            console.log('Dashboard: Utilisation des dossiers depuis localStorage');
+            const data = JSON.parse(storedDossiers);
+            processStoredDossiers(data);
+            
+            if (isMounted) {
+              setIsLoadingDossiers(false);
+              setIsUpdating(false);
+            }
+            return;
+          }
+        }
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Dashboard: Dossiers récupérés:', data);
-          
-          // Transformer les données de l'API au format attendu par le dashboard
-          const transformedDossiers = data.map((dossier: any) => {
-            console.log('Traitement dossier:', dossier);
-            return {
-              id: dossier.id,
-              client: `${dossier.client?.contactInfo?.firstName || ''} ${dossier.client?.contactInfo?.lastName || ''}`,
-              pro: dossier.client?.clientType || 'PARTICULIER',
-              type: dossier.type || 'DP FENETRE',
-              etape: dossier.workflowState || 'INITIAL',
-              statut: dossier.status || 'NOUVEAU',
-              priority: dossier.priority?.toLowerCase() || 'normal',
-              date: new Date(dossier.createdAt).toLocaleDateString('fr-FR'),
-              clientEmail: dossier.client?.contactInfo?.email || '',
-              clientPhone: dossier.client?.contactInfo?.phone || '',
-              clientId: dossier.clientId || dossier.client?.id || '',
-              reference: dossier.reference || '',
-              surface: dossier.surfaceProjet ? `${dossier.surfaceProjet} m²` : '',
-              modifications: dossier.modifications || []
-            };
+        // Fallback à l'API si pas de données locales
+        try {
+          const response = await fetch('/api/dossiers', {
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            },
+            cache: 'no-store',
           });
           
-          console.log('Dashboard: Dossiers transformés:', transformedDossiers);
-          setDossiers(transformedDossiers);
-        } else {
-          console.error('Erreur lors du chargement des dossiers');
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Dashboard: Dossiers récupérés de l\'API:', data);
+            
+            if (isMounted) {
+              processStoredDossiers(data);
+            }
+          } else {
+            throw new Error('Erreur lors de la récupération des dossiers');
+          }
+        } catch (error) {
+          console.error('Erreur API:', error);
+          
           // Utiliser des données fictives en cas d'erreur
-          setDossiers([
+          const mockDossiers = [
             { 
               id: '001', 
               client: 'Dupont Jean', 
               pro: 'PARTICULIER', 
-              type: 'DP FENETRE', 
-              etape: 'ÉTUDE APS', 
-              statut: 'ATTENTE PIÈCE', 
+              type: 'DP_FENETRE', 
+              etape: 'INITIAL', 
+              statut: 'NOUVEAU', 
               priority: 'normal', 
               date: '12/05/2025',
+              dateObj: new Date('2025-05-12'),
+              reference: 'DOS-2025-001',
+              clientEmail: 'jean.dupont@example.com',
+              clientPhone: '06 12 34 56 78',
+              clientId: 'cl-001',
+              surface: '45 m²',
+              surfaceExistant: 45,
+              surfaceProjet: 45,
+              deadline: new Date('2025-06-12'),
+              rawData: null,
               modifications: [
                 { field: 'etape', oldValue: 'INITIAL', newValue: 'ÉTUDE APS', user: 'Julie Martin', date: '10/05/2025 09:30' }
               ]
@@ -145,78 +268,144 @@ export default function Dashboard() {
             { 
               id: '002', 
               client: 'Martin Sophie', 
-              pro: 'MDT ANTONY', 
-              type: 'DP+MUR', 
+              pro: 'MDT_ANTONY', 
+              type: 'DP_MUR', 
               etape: 'INITIAL', 
-              statut: 'TOP URGENT', 
+              statut: 'TOP_URGENT', 
               priority: 'high', 
               date: '15/05/2025',
+              dateObj: new Date('2025-05-15'),
+              reference: 'DOS-2025-002',
+              clientEmail: 'sophie.martin@example.com',
+              clientPhone: '06 23 45 67 89',
+              clientId: 'cl-002',
+              surface: '32 m²',
+              surfaceExistant: 32,
+              surfaceProjet: 32,
+              deadline: new Date('2025-06-15'),
+              rawData: null,
               modifications: [
-                { field: 'statut', oldValue: 'ATTENTE PIÈCE', newValue: 'TOP URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
+                { field: 'statut', oldValue: 'ATTENTE_PIECE', newValue: 'TOP_URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
               ]
             },
             { 
               id: '003', 
               client: 'Lefebvre Pierre', 
-              pro: 'COMBLE DF', 
-              type: 'PC+RT', 
-              etape: 'DOSSIER COMPLET', 
-              statut: 'À DÉPOSER EN LIGNE', 
+              pro: 'COMBLE_DF', 
+              type: 'PC_RT', 
+              etape: 'DOSSIER_COMPLET', 
+              statut: 'A_DEPOSER_EN_LIGNE', 
               priority: 'normal', 
               date: '10/05/2025',
+              dateObj: new Date('2025-05-10'),
+              reference: 'DOS-2025-003',
+              clientEmail: 'pierre.lefebvre@example.com',
+              clientPhone: '06 34 56 78 90',
+              clientId: 'cl-003',
+              surface: '68 m²',
+              surfaceExistant: 68,
+              surfaceProjet: 68,
+              deadline: new Date('2025-06-10'),
+              rawData: null,
               modifications: []
             }
-          ]);
+          ];
+          
+          if (isMounted) {
+            setDossiers(mockDossiers);
+            calculateStats(mockDossiers);
+            setLastUpdated(new Date());
+          }
         }
       } catch (error) {
-        console.error('Erreur:', error);
-        // Utiliser des données fictives en cas d'erreur
-        setDossiers([
-          { 
-            id: '001', 
-            client: 'Dupont Jean', 
-            pro: 'PARTICULIER', 
-            type: 'DP FENETRE', 
-            etape: 'ÉTUDE APS', 
-            statut: 'ATTENTE PIÈCE', 
-            priority: 'normal', 
-            date: '12/05/2025',
-            modifications: [
-              { field: 'etape', oldValue: 'INITIAL', newValue: 'ÉTUDE APS', user: 'Julie Martin', date: '10/05/2025 09:30' }
-            ]
-          },
-          { 
-            id: '002', 
-            client: 'Martin Sophie', 
-            pro: 'MDT ANTONY', 
-            type: 'DP+MUR', 
-            etape: 'INITIAL', 
-            statut: 'TOP URGENT', 
-            priority: 'high', 
-            date: '15/05/2025',
-            modifications: [
-              { field: 'statut', oldValue: 'ATTENTE PIÈCE', newValue: 'TOP URGENT', user: 'Admin DTAHC', date: '15/05/2025 08:15' }
-            ]
-          },
-          { 
-            id: '003', 
-            client: 'Lefebvre Pierre', 
-            pro: 'COMBLE DF', 
-            type: 'PC+RT', 
-            etape: 'DOSSIER COMPLET', 
-            statut: 'À DÉPOSER EN LIGNE', 
-            priority: 'normal', 
-            date: '10/05/2025',
-            modifications: []
-          }
-        ]);
+        console.error('Erreur générale:', error);
       } finally {
-        setIsLoadingDossiers(false);
+        if (isMounted) {
+          setIsLoadingDossiers(false);
+          setIsUpdating(false);
+        }
       }
     };
     
     fetchDossiers();
+    
+    // Nettoyage
+    return () => {
+      isMounted = false;
+    };
   }, [refreshKey]);
+  
+  // Fonction pour calculer les statistiques
+  const calculateStats = (dossierList: Dossier[]) => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    // Map pour stocker les ID clients uniques
+    const uniqueClients = new Set();
+    
+    // Compteurs pour les différents statuts
+    let nouveaux = 0;
+    let aDeposer = 0;
+    let completes = 0;
+    let enCours = 0;
+    let attente = 0;
+    let urgents = 0;
+    let instruction = 0;
+    let aFacturer = 0;
+    let impayes = 0;
+    let nouveauxMois = 0;
+    
+    dossierList.forEach(dossier => {
+      // Ajouter l'ID client à l'ensemble des clients uniques
+      uniqueClients.add(dossier.clientId);
+      
+      // Vérifier si le dossier a été créé ce mois-ci
+      if (dossier.dateObj && 
+          dossier.dateObj.getMonth() === currentMonth && 
+          dossier.dateObj.getFullYear() === currentYear) {
+        nouveauxMois++;
+      }
+      
+      // Comptabiliser selon le statut
+      if (dossier.statut === 'NOUVEAU') nouveaux++;
+      if (dossier.statut === 'A_DEPOSER_EN_LIGNE') aDeposer++;
+      if (dossier.statut === 'LIVRE_CLIENT') completes++;
+      if (dossier.statut === 'EN_INSTRUCTION') instruction++;
+      if (dossier.etape === 'ATTENTE_PIECE') attente++;
+      if (dossier.priority === 'high' || dossier.statut === 'TOP_URGENT') urgents++;
+      
+      // Compter les dossiers en cours
+      if (['ETUDE_APS', 'DOSSIER_COMPLET', 'RE_2020', 'SIGNATURE_ARCHI'].includes(dossier.etape)) {
+        enCours++;
+      }
+      
+      // Compter pour la facturation (à adapter selon les critères réels)
+      if (['LIVRE_CLIENT', 'DOSSIER_COMPLET'].includes(dossier.etape) && 
+          !['FACTURE', 'PAYE'].includes(dossier.statut)) {
+        aFacturer++;
+      }
+      
+      // Compter les impayés (critères fictifs à adapter)
+      if (['FACTURE'].includes(dossier.statut)) {
+        impayes++;
+      }
+    });
+    
+    setStats({
+      total: dossierList.length,
+      nouveaux,
+      aDeposer,
+      completes,
+      enCours,
+      attente,
+      urgents,
+      instruction,
+      clients: uniqueClients.size,
+      aFacturer,
+      impayes,
+      nouveauxMois
+    });
+  };
   
   // Fonction pour basculer l'expansion des lignes
   const toggleExpand = (id: string) => {
@@ -235,7 +424,7 @@ export default function Dashboard() {
   };
   
   // Fonction pour sauvegarder la modification
-  const saveEdit = (dossierId: string, field: string, value: string) => {
+  const saveEdit = async (dossierId: string, field: string, value: string) => {
     const dossierToUpdate = dossiers.find(d => d.id === dossierId);
     
     if (!dossierToUpdate) return;
@@ -244,6 +433,7 @@ export default function Dashboard() {
     
     // N'enregistrer la modification que si la valeur a changé
     if (oldValue !== value) {
+      setIsUpdating(true);
       const now = new Date();
       const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
       
@@ -255,16 +445,59 @@ export default function Dashboard() {
         date: formattedDate
       };
       
-      const updatedDossiers = dossiers.map(dossier => 
-        dossier.id === dossierId ? 
-          { 
-            ...dossier, 
-            [field]: value,
-            modifications: [newModification, ...dossier.modifications]
-          } : dossier
-      );
-      
-      setDossiers(updatedDossiers);
+      try {
+        // Mapper les champs d'affichage vers les champs API
+        const apiFieldMap: Record<string, string> = {
+          'type': 'type',
+          'etape': 'workflowState',
+          'statut': 'status',
+          'priority': 'priority'
+        };
+        
+        // Mapper les valeurs d'affichage vers les valeurs API
+        const apiValueMap: Record<string, any> = {
+          'type': (val: string) => val,
+          'etape': (val: string) => val,
+          'statut': (val: string) => val,
+          'priority': (val: string) => val.toUpperCase()
+        };
+        
+        // Préparer les données pour l'API
+        const apiField = apiFieldMap[field] || field;
+        const apiValue = apiValueMap[field] ? apiValueMap[field](value) : value;
+        
+        // Mise à jour optimiste de l'UI
+        const updatedDossiers = dossiers.map(dossier => 
+          dossier.id === dossierId ? 
+            { 
+              ...dossier, 
+              [field]: value,
+              modifications: [newModification, ...dossier.modifications]
+            } : dossier
+        );
+        
+        setDossiers(updatedDossiers);
+        calculateStats(updatedDossiers);
+        
+        // Envoyer la mise à jour à l'API
+        if (dossierToUpdate.rawData) {
+          const updateData = {
+            [apiField]: apiValue
+          };
+          
+          const response = await updateDossier(dossierId, updateData);
+          console.log('Mise à jour enregistrée:', response);
+        } else {
+          console.log('Mise à jour locale uniquement (pas de données raw disponibles)');    
+        }
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du dossier:', error);
+        // En cas d'erreur, on pourrait restaurer l'ancienne valeur
+        // mais pour simplifier, on garde la mise à jour optimiste
+      } finally {
+        setIsUpdating(false);
+        setLastUpdated(new Date());
+      }
     }
     
     setEditingCell(null);
@@ -275,6 +508,38 @@ export default function Dashboard() {
     setSelectedHistoryId(dossierId);
     setShowModificationHistory(!showModificationHistory);
   };
+
+  // Filter dossiers based on filters
+  const filteredDossiers = useMemo(() => {
+    return dossiers.filter(dossier => {
+      // Search filter
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = 
+          dossier.client.toLowerCase().includes(searchLower) ||
+          dossier.reference?.toLowerCase().includes(searchLower) ||
+          dossier.type.toLowerCase().includes(searchLower) ||
+          dossier.statut.toLowerCase().includes(searchLower);
+        
+        if (!matchesSearch) return false;
+      }
+      
+      // Pre-defined filters
+      if (activeFilter === 'urgent' && dossier.priority !== 'high' && dossier.statut !== 'TOP_URGENT') return false;
+      if (activeFilter === 'waiting' && dossier.etape !== 'ATTENTE_PIECE') return false;
+      if (activeFilter === 'deposit' && dossier.statut !== 'A_DEPOSER_EN_LIGNE') return false;
+      if (activeFilter === 'incomplete' && dossier.statut !== 'INCOMPLETUDE_MAIRIE') return false;
+      
+      // Advanced filters
+      if (proFilter !== 'Tous' && dossier.pro !== proFilter) return false;
+      if (typeFilter !== 'Tous' && dossier.type !== typeFilter) return false;
+      if (etapeFilter !== 'Toutes' && dossier.etape !== etapeFilter) return false;
+      if (statutFilter !== 'Tous' && dossier.statut !== statutFilter) return false;
+      if (priorityFilter !== 'Toutes' && dossier.priority !== priorityFilter.toLowerCase()) return false;
+      
+      return true;
+    });
+  }, [dossiers, searchQuery, activeFilter, proFilter, typeFilter, etapeFilter, statutFilter, priorityFilter]);
   
   // Composant d'édition de cellule
   const EditableCell = ({ 
@@ -331,7 +596,7 @@ export default function Dashboard() {
       </div>
     );
   };
-  
+
   return (
     <div>
       {/* Page title and actions */}
@@ -343,14 +608,14 @@ export default function Dashboard() {
         
         <div className="flex items-center space-x-4">
           <span className="flex items-center text-sm text-gray-500">
-            <RefreshCw size={16} className="mr-2" /> 
-            Dernière mise à jour: 16/05/2025 10:24
+            <RefreshCw size={16} className={`mr-2 ${isUpdating ? 'animate-spin' : ''}`} /> 
+            Dernière mise à jour: {formatDate(lastUpdated)}
           </span>
           
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md">
+          <a href="/clients/new" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
             <Plus size={16} />
             <span>Nouveau dossier</span>
-          </button>
+          </a>
         </div>
       </div>
       
@@ -363,21 +628,21 @@ export default function Dashboard() {
           <div>
             <h2 className="text-sm text-gray-500 mb-1">Dossiers</h2>
             <div className="flex items-end">
-              <p className="text-3xl font-semibold text-gray-800">32</p>
+              <p className="text-3xl font-semibold text-gray-800">{stats.total}</p>
               <span className="ml-2 text-sm text-gray-500">actifs</span>
             </div>
             <div className="flex mt-2">
               <div className="mr-4">
                 <span className="text-xs text-gray-500">Nouveaux</span>
-                <p className="font-medium text-blue-600">5</p>
+                <p className="font-medium text-blue-600">{stats.nouveaux}</p>
               </div>
               <div className="mr-4">
                 <span className="text-xs text-gray-500">À déposer</span>
-                <p className="font-medium text-green-600">4</p>
+                <p className="font-medium text-green-600">{stats.aDeposer}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-500">Complétés</span>
-                <p className="font-medium text-purple-600">12</p>
+                <p className="font-medium text-purple-600">{stats.completes}</p>
               </div>
             </div>
           </div>
@@ -390,21 +655,21 @@ export default function Dashboard() {
           <div>
             <h2 className="text-sm text-gray-500 mb-1">Statut des dossiers</h2>
             <div className="flex items-end">
-              <p className="text-3xl font-semibold text-gray-800">15</p>
+              <p className="text-3xl font-semibold text-gray-800">{stats.enCours}</p>
               <span className="ml-2 text-sm text-gray-500">en cours</span>
             </div>
             <div className="flex mt-2">
               <div className="mr-4">
                 <span className="text-xs text-gray-500">Attente</span>
-                <p className="font-medium text-amber-600">3</p>
+                <p className="font-medium text-amber-600">{stats.attente}</p>
               </div>
               <div className="mr-4">
                 <span className="text-xs text-gray-500">Urgents</span>
-                <p className="font-medium text-red-600">2</p>
+                <p className="font-medium text-red-600">{stats.urgents}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-500">Instruction</span>
-                <p className="font-medium text-cyan-600">8</p>
+                <p className="font-medium text-cyan-600">{stats.instruction}</p>
               </div>
             </div>
           </div>
@@ -417,21 +682,21 @@ export default function Dashboard() {
           <div>
             <h2 className="text-sm text-gray-500 mb-1">Clients & Facturation</h2>
             <div className="flex items-end">
-              <p className="text-3xl font-semibold text-gray-800">15</p>
+              <p className="text-3xl font-semibold text-gray-800">{stats.clients}</p>
               <span className="ml-2 text-sm text-gray-500">clients actifs</span>
             </div>
             <div className="flex mt-2">
               <div className="mr-4">
                 <span className="text-xs text-gray-500">À facturer</span>
-                <p className="font-medium text-blue-600">3</p>
+                <p className="font-medium text-blue-600">{stats.aFacturer}</p>
               </div>
               <div className="mr-4">
                 <span className="text-xs text-gray-500">Impayés</span>
-                <p className="font-medium text-red-600">2</p>
+                <p className="font-medium text-red-600">{stats.impayes}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-500">Ce mois</span>
-                <p className="font-medium text-green-600">+2</p>
+                <p className="font-medium text-green-600">+{stats.nouveauxMois}</p>
               </div>
             </div>
           </div>
@@ -446,6 +711,8 @@ export default function Dashboard() {
             type="text" 
             placeholder="Rechercher un dossier..." 
             className="pl-10 w-full py-2 px-3 border border-gray-300 rounded-lg"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         
@@ -456,15 +723,90 @@ export default function Dashboard() {
           </div>
           
           <button 
-            className="flex items-center border border-gray-300 rounded-lg px-3 py-1.5 bg-white"
+            className={`flex items-center border rounded-lg px-3 py-1.5 ${showFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-gray-300'}`}
             onClick={() => setShowFilters(!showFilters)}
           >
-            <Filter size={16} className="mr-2 text-gray-500" />
+            <Filter size={16} className={`mr-2 ${showFilters ? 'text-blue-500' : 'text-gray-500'}`} />
             <span className="text-sm">Filtres</span>
-            <ChevronDown size={16} className="ml-2 text-gray-500" />
+            <ChevronDown size={16} className={`ml-2 ${showFilters ? 'text-blue-500 transform rotate-180' : 'text-gray-500'}`} />
           </button>
         </div>
       </div>
+      
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Type de pro</label>
+            <select 
+              className="w-full border border-gray-300 rounded-md text-sm py-2"
+              value={proFilter}
+              onChange={(e) => setProFilter(e.target.value)}
+            >
+              <option value="Tous">Tous les pros</option>
+              {prosOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Type de dossier</label>
+            <select 
+              className="w-full border border-gray-300 rounded-md text-sm py-2"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="Tous">Tous les types</option>
+              {typesOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Étape</label>
+            <select 
+              className="w-full border border-gray-300 rounded-md text-sm py-2"
+              value={etapeFilter}
+              onChange={(e) => setEtapeFilter(e.target.value)}
+            >
+              <option value="Toutes">Toutes les étapes</option>
+              {etapesOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Statut</label>
+            <select 
+              className="w-full border border-gray-300 rounded-md text-sm py-2"
+              value={statutFilter}
+              onChange={(e) => setStatutFilter(e.target.value)}
+            >
+              <option value="Tous">Tous les statuts</option>
+              {statutsOptions.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Priorité</label>
+            <select 
+              className="w-full border border-gray-300 rounded-md text-sm py-2"
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+            >
+              <option value="Toutes">Toutes les priorités</option>
+              <option value="High">Haute</option>
+              <option value="Normal">Normale</option>
+              <option value="Low">Basse</option>
+            </select>
+          </div>
+        </div>
+      )}
       
       {/* Filter Pills */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -511,10 +853,43 @@ export default function Dashboard() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {dossiers.map((dossier, index) => (
+            {isLoadingDossiers ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center">
+                    <RefreshCw size={24} className="animate-spin mb-3 text-blue-500" />
+                    <p>Chargement des dossiers...</p>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredDossiers.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center">
+                    <ListFilter size={24} className="mb-3 text-gray-400" />
+                    <p>Aucun dossier ne correspond aux critères de filtrage</p>
+                    <button 
+                      className="mt-3 text-blue-600 text-sm underline"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setActiveFilter('all');
+                        setProFilter('Tous');
+                        setTypeFilter('Tous');
+                        setEtapeFilter('Toutes');
+                        setStatutFilter('Tous');
+                        setPriorityFilter('Toutes');
+                      }}
+                    >
+                      Réinitialiser les filtres
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ) : filteredDossiers.map((dossier, index) => (
               <React.Fragment key={dossier.id}>
                 <tr 
-                  className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} 
+                  id={`dossier-${dossier.id}`}
+                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${expandedRow === dossier.id ? 'bg-blue-50' : ''}`} 
                   onClick={() => toggleExpand(dossier.id)}
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-700">
@@ -523,7 +898,7 @@ export default function Dashboard() {
                         <ChevronDown size={16} className="mr-2 text-gray-400" /> : 
                         <ChevronRight size={16} className="mr-2 text-gray-400" />
                       }
-                      {dossier.id}
+                      {formatDossierId(dossier.id, dossier.reference)}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-700">{dossier.client}</td>
@@ -568,9 +943,9 @@ export default function Dashboard() {
                   <td className="px-4 py-3 text-sm text-gray-700">{dossier.date}</td>
                   <td className="px-4 py-3 text-sm">
                     <div className="flex items-center space-x-2">
-                      <button className="p-1 rounded-md hover:bg-gray-100">
+                      <a href={`/clients/${dossier.clientId}`} className="p-1 rounded-md hover:bg-gray-100">
                         <Eye size={16} className="text-gray-500" />
-                      </button>
+                      </a>
                       <button className="p-1 rounded-md hover:bg-gray-100">
                         <MoreVertical size={16} className="text-gray-500" />
                       </button>
@@ -645,12 +1020,12 @@ export default function Dashboard() {
                             </button>
                           </div>
                           <div className="flex space-x-2 mb-3">
-                            <button className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
+                            <a href={`/clients/${dossier.clientId}`} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
                               Voir les détails
-                            </button>
-                            <button className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">
+                            </a>
+                            <a href={`/clients/${dossier.clientId}/edit`} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">
                               Modifier
-                            </button>
+                            </a>
                           </div>
                           
                           {showModificationHistory && selectedHistoryId === dossier.id && (
@@ -693,14 +1068,20 @@ export default function Dashboard() {
           <div className="flex-1 flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-700">
-                Affichage de <span className="font-medium">1</span> à <span className="font-medium">5</span> sur <span className="font-medium">32</span> résultats
+                Affichage de <span className="font-medium">{filteredDossiers.length > 0 ? 1 : 0}</span> à <span className="font-medium">{Math.min(filteredDossiers.length, 10)}</span> sur <span className="font-medium">{filteredDossiers.length}</span> résultats
               </p>
             </div>
             <div className="flex space-x-2">
-              <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white">
+              <button 
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={true} // À ajuster avec pagination réelle
+              >
                 Précédent
               </button>
-              <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white">
+              <button 
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={filteredDossiers.length <= 10} // À ajuster avec pagination réelle
+              >
                 Suivant
               </button>
             </div>
@@ -716,32 +1097,52 @@ export default function Dashboard() {
         </div>
         
         <div className="divide-y divide-gray-200">
-          {[
-            { title: 'Dépôt dossier Martin', date: '18/05/2025', client: 'Martin Sophie', priority: 'high' },
-            { title: 'Réunion ABF - Projet Durand', date: '20/05/2025', client: 'Durand Thomas', priority: 'normal' },
-            { title: 'Date limite DAACT - Dossier Petit', date: '22/05/2025', client: 'Petit Jacques', priority: 'normal' },
-            { title: 'Réception avis urbanisme', date: '25/05/2025', client: 'Lefebvre Pierre', priority: 'low' }
-          ].map((event, index) => (
-            <div key={index} className="py-3 flex justify-between items-center">
-              <div className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-3 ${
-                  event.priority === 'high' ? 'bg-red-500' : 
-                  event.priority === 'normal' ? 'bg-amber-500' : 
-                  'bg-green-500'
-                }`}></div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{event.title}</p>
-                  <p className="text-xs text-gray-500">Client: {event.client}</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm text-gray-600 mr-4">{event.date}</span>
-                <button className="p-1 rounded-md hover:bg-gray-100">
-                  <MoreVertical size={16} className="text-gray-500" />
-                </button>
-              </div>
+          {isLoadingDossiers ? (
+            <div className="py-8 text-center text-gray-500">
+              <RefreshCw size={20} className="animate-spin mx-auto mb-3" />
+              <p>Chargement des échéances...</p>
             </div>
-          ))}
+          ) : dossiers.filter(d => d.deadline).length === 0 ? (
+            <div className="py-8 text-center text-gray-500">
+              <Calendar size={20} className="mx-auto mb-3" />
+              <p>Aucune échéance à venir</p>
+            </div>
+          ) : dossiers
+            .filter(d => d.deadline) // Filter dossiers with deadlines
+            .sort((a, b) => (a.deadline && b.deadline) ? a.deadline.getTime() - b.deadline.getTime() : 0) // Sort by deadline
+            .slice(0, 4) // Only show first 4
+            .map((dossier, index) => {
+              // Generate event title based on dossier state
+              let eventTitle = '';
+              if (dossier.statut === 'A_DEPOSER_EN_LIGNE') {
+                eventTitle = `Dépôt dossier ${dossier.client}`;
+              } else if (dossier.etape === 'SIGNATURE_ARCHI') {
+                eventTitle = `Signature architecte - Dossier ${dossier.client}`;
+              } else if (dossier.etape === 'ATTENTE_PIECE') {
+                eventTitle = `Relance pièces - Dossier ${dossier.client}`;
+              } else {
+                eventTitle = `Échéance dossier ${dossier.client}`;
+              }
+            
+              return (
+                <div key={index} className="py-3 flex justify-between items-center">
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full mr-3 ${dossier.priority === 'high' ? 'bg-red-500' : dossier.priority === 'normal' ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{eventTitle}</p>
+                      <p className="text-xs text-gray-500">Client: {dossier.client}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 mr-4">{dossier.deadline ? formatDate(dossier.deadline) : ''}</span>
+                    <button className="p-1 rounded-md hover:bg-gray-100">
+                      <MoreVertical size={16} className="text-gray-500" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          }
         </div>
       </div>
     </div>

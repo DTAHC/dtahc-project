@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Toaster } from 'react-hot-toast'
 import './globals.css'
+import Providers from './providers'
+import HydrationFix from '../components/ui/HydrationFix'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,7 +20,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <HydrationFix />
+        <Script src="/reload.js" strategy="beforeInteractive" />
+      </head>
+      <body className={inter.className}>
+        <Providers>
+          {children}
+          <Toaster position="top-right" />
+        </Providers>
+      </body>
     </html>
   )
 }
