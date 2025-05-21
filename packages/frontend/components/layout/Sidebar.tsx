@@ -15,7 +15,8 @@ import {
   Mail,
   FolderOpen,
   Plus,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import ClientOnlyIcon from '../ui/ClientOnlyIcon';
 
@@ -111,6 +112,19 @@ export default function Sidebar({ activeMenu = 'dashboard' }: SidebarProps) {
               fallback={<div className="w-5 h-5 mr-3" />}
             />
             <span className="font-medium">Emails</span>
+          </Link>
+          
+          <Link 
+            href="/communication" 
+            className={`flex items-center w-full px-4 py-3 rounded-lg text-left ${
+              isActive('/communication') ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <ClientOnlyIcon 
+              icon={<MessageSquare size={20} className="mr-3" />}
+              fallback={<div className="w-5 h-5 mr-3" />}
+            />
+            <span className="font-medium">Communication</span>
           </Link>
 
           <Link 
