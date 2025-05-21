@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "dependencies": {
+    "@dtahc/shared": "file:../shared",
     "@tanstack/react-query": "^4.29.15",
     "axios": "^1.4.0",
     "date-fns": "^2.30.0",
@@ -18,6 +19,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.1",
+    "react-hot-toast": "^2.5.2",
     "socket.io-client": "^4.7.1",
     "tailwindcss": "^3.3.2",
     "zustand": "^4.3.9"

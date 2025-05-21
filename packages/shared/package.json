@@ -1,14 +1,16 @@
 {
   "name": "shared",
   "version": "1.0.0",
-  "private": true,
+  "description": "Types et utilitaires partagés",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc --watch"
   },
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.3"
   }
 }

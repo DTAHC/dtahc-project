@@ -1,74 +1,42 @@
-# Dependencies
-node_modules
-.pnp
-.pnp.js
+# Dépendances
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
 
-# Build outputs
-/packages/*/dist
-/packages/*/build
-/packages/frontend/.next/
-/packages/frontend/out/
-
-# Environment variables
+# Fichiers environnement
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Logs
-logs
+# Fichiers temporaires
+/uploads/temp/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+logs/
+*.logs
+tmp/
+temp/
 
-# Cache
-.npm
-.eslintcache
-.vercel
-.next
-.turbo
+# Fichiers de build
+/dist
+/build
+/coverage
 
-# Coverage
-coverage
-*.lcov
-
-# Database
-**/prisma/migrations/*
-*.sqlite
-*.sqlite3
-*.db
-
-# IDE
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS
+# Fichiers IDE et OS
+.idea/
+.vscode/
 .DS_Store
-*.pem
+*.swp
+*~
+Thumbs.db
+.project
+.classpath
+.settings/
+*.sublime-workspace
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Temporary files
-tmp
-temp
-*.tmp
-*.temp
-
-# MinIO Data
-docker/minio-data
-docker/postgres-data
-
-# Generated TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# Fichiers de déploiement
+.npmrc
+.yarnrc
+.npmignore
