@@ -3,14 +3,20 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 dotenv.config();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug'],
+  });
   
   // Préfixe des routes API
   app.setGlobalPrefix(process.env.API_PREFIX || '/api');
+  
+  // Filtre d'exception global
+  app.useGlobalFilters(new AllExceptionsFilter());
   
   // Validation globale des DTOs
   app.useGlobalPipes(new ValidationPipe({
@@ -50,8 +56,8 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
   
   const port = process.env.API_PORT || 3001;
-  await app.listen(port);
-  console.log(`Application API running on: ${await app.getUrl()}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application API running on: http://localhost:${port}`);
 }
 
 bootstrap();

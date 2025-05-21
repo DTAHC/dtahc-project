@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MaxLength, MinLength, IsBoolean } from 'class-validator';
 import { ClientType } from '@prisma/client';
 
 export class CreateClientDto {
@@ -18,21 +18,28 @@ export class CreateClientDto {
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(10)
-  phone: string;
+  phone?: string;
   
   @IsOptional()
   @IsString()
   proReferenceId?: string;
   
-  // Adresse
+  @IsOptional()
   @IsString()
-  street: string;
+  street?: string;
   
+  @IsOptional()
   @IsString()
-  city: string;
+  city?: string;
   
+  @IsOptional()
   @IsString()
-  postalCode: string;
+  postalCode?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  sendFormLink?: boolean;
 }

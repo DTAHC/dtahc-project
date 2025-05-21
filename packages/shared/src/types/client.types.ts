@@ -1,3 +1,6 @@
+import { Dossier } from './dossier.types';
+import { FormLink } from './form-link.types';
+
 export enum ClientType {
   PARTICULIER = 'PARTICULIER',
   ARCADIA = 'ARCADIA',
@@ -23,10 +26,9 @@ export enum ClientType {
 }
 
 export enum AddressType {
-  PRINCIPALE = 'PRINCIPALE',
   FACTURATION = 'FACTURATION',
-  LIVRAISON = 'LIVRAISON',
-  TRAVAUX = 'TRAVAUX',
+  POSTAL = 'POSTAL',
+  PROJECT = 'PROJECT',
 }
 
 export interface ContactInfo {
@@ -36,6 +38,7 @@ export interface ContactInfo {
   lastName: string;
   email: string;
   phone: string;
+  mobilePhone?: string;
 }
 
 export interface Address {
@@ -45,7 +48,11 @@ export interface Address {
   street: string;
   city: string;
   postalCode: string;
-  country: string;
+  country?: string;
+  complement?: string;
+  isProjectAddress?: boolean;
+  cadastralReference?: string;
+  coordinates?: any;
 }
 
 export interface Client {
@@ -59,6 +66,10 @@ export interface Client {
   contactInfo?: ContactInfo;
   addresses?: Address[];
   dossiers?: Dossier[];
+  formLinks?: FormLink[];
+  status?: string;
+  source?: string;
+  lastContactDate?: string;
 }
 
 export interface CreateClientDto {
@@ -66,9 +77,10 @@ export interface CreateClientDto {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phone?: string;
   proReferenceId?: string;
-  street: string;
-  city: string;
-  postalCode: string;
+  street?: string;
+  city?: string;
+  postalCode?: string;
+  sendFormLink?: boolean;
 }
